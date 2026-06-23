@@ -20,10 +20,11 @@ foreach ( array(
 	'soldx_api_key',
 	'soldx_integration_id',
 	'soldx_establishment_name',
-	'soldx_category_map', // cached Studio→WC category id map
+	'soldx_org_id',
+	'soldx_category_mapping', // WC → Studio category id map
 ) as $option ) {
 	delete_option( $option );
 }
 
-// Clean up WP-Cron hooks.
-wp_clear_scheduled_hook( 'soldx_cron_soft_trash' );
+// Clean up transients.
+delete_transient( 'soldx_establishment_options' );

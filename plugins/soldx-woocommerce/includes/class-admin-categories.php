@@ -54,7 +54,7 @@ class Soldx_Admin_Categories {
 			'soldx-admin',
 			SOLDX_PLUGIN_URL . 'admin/assets/admin.css',
 			array(),
-			SOLDX_VERSION
+			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin.css' )
 		);
 		// SelectWoo = WooCommerce's Select2 fork — makes the Studio category
 		// dropdowns searchable (shipped with WC core).
