@@ -93,7 +93,113 @@
 	margin: 4px 0;
 }
 
+/* Safety reassurance box */
+
+.soldx-safety {
+	display: flex;
+	gap: 14px;
+	background: #fcfdff;
+	border: 1px solid #ccdcf3;
+	border-left: 4px solid #2271b1;
+	border-radius: 4px;
+	padding: 14px 18px;
+	margin-bottom: 18px;
+}
+
+.soldx-safety-icon {
+	flex-shrink: 0;
+	padding-top: 2px;
+}
+
+.soldx-safety-icon .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+	color: #2271b1;
+}
+
+.soldx-safety-body h3 {
+	margin: 0 0 6px;
+	font-size: 14px;
+	color: #1d2327;
+}
+
+.soldx-safety-body ul {
+	margin: 0 0 0 18px;
+	list-style: disc;
+}
+
+.soldx-safety-body li {
+	margin: 3px 0;
+	font-size: 13px;
+	color: #3c434a;
+	line-height: 1.5;
+}
+
+.soldx-safety-inline {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: #fcfdff;
+	border: 1px solid #ccdcf3;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin-bottom: 14px;
+	font-size: 13px;
+	color: #3c434a;
+}
+
+.soldx-safety-inline .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	color: #2271b1;
+	flex-shrink: 0;
+}
+
 /* Articles page */
+
+.soldx-wrap--fluid {
+	max-width: 100%;
+}
+
+/* Tag toggle pills (matches Studio /articles/new UX) */
+
+.soldx-tag-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.soldx-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 11px;
+	line-height: 1.6;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+	background: #f0f0f1;
+	color: #50575e;
+	border: 1px solid transparent;
+	transition: background 0.15s, color 0.15s;
+}
+
+.soldx-pill:hover {
+	background: #dcdcde;
+}
+
+.soldx-pill input[type="checkbox"] {
+	display: none;
+}
+
+.soldx-pill--on,
+.soldx-pill--on:hover {
+	background: #2271b1;
+	color: #fff;
+}
 
 .soldx-search-form {
 	display: flex;

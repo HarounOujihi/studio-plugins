@@ -53,7 +53,7 @@ class Soldx_Admin_Settings {
 			'soldx-admin',
 			SOLDX_PLUGIN_URL . 'admin/assets/admin.css',
 			array(),
-			SOLDX_VERSION
+			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin.css' )
 		);
 	}
 
@@ -175,6 +175,22 @@ class Soldx_Admin_Settings {
 
 			<?php soldx_flash_notice_maybe_print(); ?>
 
+			<div class="soldx-safety">
+				<div class="soldx-safety-icon">
+					<span class="dashicons dashicons-shield-alt"></span>
+				</div>
+				<div class="soldx-safety-body">
+					<h3><?php esc_html_e( 'Your store is safe', 'soldx-woocommerce' ); ?></h3>
+					<ul>
+						<li><?php esc_html_e( 'This plugin is read-only: it never modifies, deletes, or reorders your WooCommerce products, orders, or settings.', 'soldx-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'Nothing happens automatically. Products are sent to Studio only when you manually click "Push to Studio".', 'soldx-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'No background tasks, no cron jobs, no webhooks — zero automation.', 'soldx-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'You choose exactly which products to push, one by one.', 'soldx-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'Disconnect at any time. Your WooCommerce data is never affected.', 'soldx-woocommerce' ); ?></li>
+					</ul>
+				</div>
+			</div>
+
 			<?php if ( $is_connected ) : ?>
 				<div class="soldx-card soldx-card--connected">
 					<div class="soldx-card-body">
@@ -270,11 +286,12 @@ class Soldx_Admin_Settings {
 			<div class="soldx-help">
 				<h3><?php esc_html_e( 'How sync works', 'soldx-woocommerce' ); ?></h3>
 				<ul>
-					<li><?php esc_html_e( 'Products are pushed from WooCommerce to Studio only (one-way).', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'You pick which products to push on the Articles page.', 'soldx-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'One-way push: WooCommerce → Studio only. Studio never writes back to your shop.', 'soldx-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Manual only: you pick which products to push on the Articles page — no automatic syncing, ever.', 'soldx-woocommerce' ); ?></li>
 					<li><?php esc_html_e( 'For each product you choose a sale unit (required), a purchase unit, and a deposit.', 'soldx-woocommerce' ); ?></li>
 					<li><?php esc_html_e( 'Pricing is synced; stock is intentionally NOT synced.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'Re-pushing a product updates the matching Studio article.', 'soldx-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Re-pushing a product updates the matching Studio article in Studio — not in WooCommerce.', 'soldx-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Uninstalling or disconnecting the plugin leaves your WooCommerce store exactly as it was.', 'soldx-woocommerce' ); ?></li>
 				</ul>
 			</div>
 		</div>

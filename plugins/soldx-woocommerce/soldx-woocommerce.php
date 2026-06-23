@@ -21,6 +21,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
+// Declare HPOS (High-Performance Order Storage) compatibility.
+// This plugin only reads WC_Product data — it never touches orders.
+add_action( 'before_woocommerce_init', function () {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	}
+} );
+
 define( 'SOLDX_VERSION', '0.1.0' );
 define( 'SOLDX_PLUGIN_FILE', __FILE__ );
 define( 'SOLDX_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

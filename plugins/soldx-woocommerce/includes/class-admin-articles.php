@@ -54,10 +54,8 @@ class Soldx_Admin_Articles {
 			'soldx-admin',
 			SOLDX_PLUGIN_URL . 'admin/assets/admin.css',
 			array(),
-			SOLDX_VERSION
+			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin.css' )
 		);
-		// SelectWoo for searchable tag multi-select.
-		wp_enqueue_script( 'selectWoo' );
 	}
 
 	/**
@@ -304,16 +302,15 @@ class Soldx_Admin_Articles {
 		}
 		$cats_url = soldx_admin_url( Soldx_Admin_Categories::PAGE_SLUG );
 
-		// Studio tags — group by `group` field, build slug→id lookup for auto-match.
+		// Studio tags — flat list sorted by display name (matches Studio /articles/new).
 		$studio_tags  = isset( $options['tags'] ) && is_array( $options['tags'] ) ? $options['tags'] : array();
-		$tags_by_group = array();
-		$tag_slug_map  = array();
+		$tag_slug_map = array();
+		usort( $studio_tags, function ( $a, $b ) {
+			$na = ! empty( $a['nameFr'] ) ? $a['nameFr'] : ( ! empty( $a['name'] ) ? $a['name'] : '' );
+			$nb = ! empty( $b['nameFr'] ) ? $b['nameFr'] : ( ! empty( $b['name'] ) ? $b['name'] : '' );
+			return strcasecmp( $na, $nb );
+		} );
 		foreach ( $studio_tags as $stag ) {
-			$group = ! empty( $stag['group'] ) ? $stag['group'] : __( 'Other', 'soldx-woocommerce' );
-			if ( ! isset( $tags_by_group[ $group ] ) ) {
-				$tags_by_group[ $group ] = array();
-			}
-			$tags_by_group[ $group ][] = $stag;
 			if ( ! empty( $stag['slug'] ) ) {
 				$tag_slug_map[ $stag['slug'] ] = $stag['id'];
 			}
@@ -355,12 +352,16 @@ class Soldx_Admin_Articles {
 
 		$base_url = soldx_admin_url( self::PAGE_SLUG );
 		?>
-		<div class="wrap soldx-wrap">
+		<div class="wrap soldx-wrap soldx-wrap--fluid">
 			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Articles', 'soldx-woocommerce' ); ?>
 				<a class="page-title-action" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Refresh', 'soldx-woocommerce' ); ?></a>
 			</h1>
 			<p class="soldx-subtitle"><?php esc_html_e( 'Select WooCommerce products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.', 'soldx-woocommerce' ); ?>
 				<a class="page-title-action" href="<?php echo esc_url( $cats_url ); ?>"><?php esc_html_e( 'Category Mapping', 'soldx-woocommerce' ); ?></a>
+			</p>
+			<p class="soldx-safety-inline">
+				<span class="dashicons dashicons-shield-alt"></span>
+				<?php esc_html_e( 'Read-only: nothing is modified in your WooCommerce store. Products are pushed to Studio only when you click the button below — no automation.', 'soldx-woocommerce' ); ?>
 			</p>
 
 			<form method="get" class="soldx-search-form">
@@ -482,21 +483,21 @@ class Soldx_Admin_Articles {
 									}
 								?></td>
 								<td class="soldx-tags">
-									<select multiple name="overrides[<?php echo esc_attr( (string) $pid ); ?>][tagIds][]" class="soldx-select soldx-tag-select" data-placeholder="<?php esc_attr_e( 'Select tags…', 'soldx-woocommerce' ); ?>">
-										<?php foreach ( $tags_by_group as $group_label => $group_tags ) : ?>
-											<optgroup label="<?php echo esc_attr( ucfirst( $group_label ) ); ?>">
-											<?php foreach ( $group_tags as $stag ) : ?>
-												<?php
-												$tag_id   = isset( $stag['id'] ) ? $stag['id'] : '';
-												$tag_name = isset( $stag['name'] ) ? $stag['name'] : '';
-												$tag_fr   = ( isset( $stag['nameFr'] ) && '' !== $stag['nameFr'] ) ? $stag['nameFr'] : '';
-												$tag_lbl  = $tag_fr ? ( $tag_name . ' (' . $tag_fr . ')' ) : $tag_name;
-												?>
-												<option value="<?php echo esc_attr( $tag_id ); ?>"<?php echo in_array( $tag_id, $auto_tag_ids, true ) ? ' selected' : ''; ?>><?php echo esc_html( $tag_lbl ); ?></option>
-											<?php endforeach; ?>
-										</optgroup>
-										<?php endforeach; ?>
-									</select>
+									<div class="soldx-tag-pills">
+									<?php foreach ( $studio_tags as $stag ) : ?>
+										<?php
+										$tag_id      = isset( $stag['id'] ) ? $stag['id'] : '';
+										$tag_name    = isset( $stag['name'] ) ? trim( (string) $stag['name'] ) : '';
+										$tag_fr_raw  = isset( $stag['nameFr'] ) ? trim( (string) $stag['nameFr'] ) : '';
+										$tag_lbl     = '' !== $tag_fr_raw ? $tag_fr_raw : $tag_name;
+										$on       = in_array( $tag_id, $auto_tag_ids, true );
+										?>
+										<label class="soldx-pill<?php echo $on ? ' soldx-pill--on' : ''; ?>">
+											<input type="checkbox" name="overrides[<?php echo esc_attr( (string) $pid ); ?>][tagIds][]" value="<?php echo esc_attr( $tag_id ); ?>"<?php echo $on ? ' checked' : ''; ?> />
+											<?php echo esc_html( $tag_lbl ); ?>
+										</label>
+									<?php endforeach; ?>
+									</div>
 								</td>
 									<td class="soldx-unit">
 										<?php echo $this->select_field( "overrides[{$pid}][saleUnitId]", $units, $su, 'designation', true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
@@ -555,19 +556,12 @@ class Soldx_Admin_Articles {
 				});
 			}
 		})();
-		// SelectWoo for searchable tag multi-selects.
-		if (typeof jQuery !== 'undefined') {
-			jQuery(function($) {
-				$('.soldx-tag-select').each(function() {
-					$(this).selectWoo({
-						placeholder: $(this).data('placeholder') || 'Select tags…',
-						allowClear: true,
-						width: '100%',
-						closeOnSelect: false
-					});
-				});
+		// Toggle pill visual state on checkbox change.
+		document.querySelectorAll('.soldx-pill input[type="checkbox"]').forEach(function(cb) {
+			cb.addEventListener('change', function() {
+				this.closest('.soldx-pill').classList.toggle('soldx-pill--on', this.checked);
 			});
-		}
+		});
 		</script>
 		<?php
 	}
