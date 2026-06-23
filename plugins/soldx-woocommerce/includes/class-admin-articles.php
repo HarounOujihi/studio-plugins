@@ -365,7 +365,8 @@ class Soldx_Admin_Articles {
 							<th class="soldx-thumb"><?php esc_html_e( 'Image', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-name"><?php esc_html_e( 'Product', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-sku"><?php esc_html_e( 'SKU', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-price"><?php esc_html_e( 'Price', 'soldx-woocommerce' ); ?></th>
+							<th class="soldx-price"><?php esc_html_e( 'Reg. Price', 'soldx-woocommerce' ); ?></th>
+							<th class="soldx-price"><?php esc_html_e( 'Sale Price', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Sale unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Purchase unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-deposit"><?php esc_html_e( 'Deposit', 'soldx-woocommerce' ); ?></th>
@@ -376,7 +377,7 @@ class Soldx_Admin_Articles {
 					<tbody>
 						<?php if ( empty( $items ) ) : ?>
 							<tr>
-								<td colspan="10"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
+								<td colspan="11"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $items as $p ) : ?>
@@ -412,7 +413,11 @@ class Soldx_Admin_Articles {
 										<br><span class="soldx-muted">#<?php echo esc_html( (string) $pid ); ?></span>
 									</td>
 									<td class="soldx-sku"><code><?php echo esc_html( $p->get_sku() ? $p->get_sku() : '—' ); ?></code></td>
-									<td class="soldx-price"><?php echo wp_kses_post( wc_price( $p->get_price() ) ); ?></td>
+									<td class="soldx-price"><?php echo wp_kses_post( wc_price( $p->get_regular_price() ) ); ?></td>
+								<td class="soldx-price"><?php
+									$sp = $p->get_sale_price();
+									echo wp_kses_post( '' !== $sp ? wc_price( $sp ) : '—' );
+								?></td>
 									<td class="soldx-unit">
 										<?php echo $this->select_field( "overrides[{$pid}][saleUnitId]", $units, $su, 'designation', true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 									</td>

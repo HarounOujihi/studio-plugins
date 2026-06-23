@@ -172,9 +172,15 @@ class Soldx_Sync_Engine {
 		$sku   = $product->get_sku();
 		$title = $product->get_name();
 
-		// Pricing — WC's regular_price is the sale price for Studio (D4).
-		$sale    = $product->get_price();
-		$sale_price = ( '' !== $sale && is_numeric( $sale ) ) ? (float) $sale : 0.0;
+		// Pricing — WC regular_price is the base price for Studio.
+		// WC sale_price (if set and lower) becomes a Studio Discount.
+		$regular_raw   = $product->get_regular_price();
+		$regular_price = ( '' !== $regular_raw && is_numeric( $regular_raw ) ) ? (float) $regular_raw : 0.0;
+		$sale_raw      = $product->get_sale_price();
+		$sale_price    = ( '' !== $sale_raw && is_numeric( $sale_raw ) ) ? (float) $sale_raw : 0.0;
+
+		// Fall back to get_price() if regular is empty (e.g. variations).
+		$base_price = $regular_price > 0 ? $regular_price : (float) $product->get_price();
 
 		// Tax rate hint (D10).
 		$tax_rate = $this->estimate_tax_rate( $product );
@@ -185,30 +191,45 @@ class Soldx_Sync_Engine {
 		// Media: S3 keys uploaded before DTO construction.
 		$gallery_keys = is_array( $gallery_keys ) ? $gallery_keys : array();
 
+		// Discount: WC sale_price < regular_price → percent discount.
+		$discount_percent = 0.0;
+		$discount_start   = null;
+		$discount_end     = null;
+		if ( $sale_price > 0 && $sale_price < $base_price && $base_price > 0 ) {
+			$discount_percent = round( ( 1.0 - $sale_price / $base_price ) * 100, 4 );
+			$from = $product->get_date_on_sale_from();
+			$to   = $product->get_date_on_sale_to();
+			$discount_start = $from ? $from->format( 'c' ) : null;
+			$discount_end   = $to ? $to->format( 'c' ) : null;
+		}
+
 		$dto = array(
-			'externalId'       => $id,
-			'externalSlug'     => '' !== $sku ? $sku : null,
-			'designation'      => $title,
-			'published'        => $published,
-			'slug'             => $product->get_slug(),
-			'shortDescription' => $product->get_short_description() ?: null,
-			'description'      => $product->get_description() ?: null,
-			'ean'              => $this->extract_ean( $product ),
-			'weight'           => $this->weight_as_number( $product->get_weight() ),
-			'productType'      => $this->map_product_type( $product ),
-			'isService'        => $product->is_virtual() && 'SERVICE' === $this->map_product_type( $product ),
-			'isDigitalProduct' => $product->is_downloadable(),
-			'media'            => $media_key,
-			'gallery'          => $gallery_keys,
-			'pricing'          => array(
-				'salePrice'      => $sale_price,
-				'purchasePrice'  => 0,
-				'taxRate'        => $tax_rate,
+			'externalId'        => $id,
+			'externalSlug'      => '' !== $sku ? $sku : null,
+			'designation'       => $title,
+			'published'         => $published,
+			'slug'              => $product->get_slug(),
+			'shortDescription'  => $product->get_short_description() ?: null,
+			'description'       => $product->get_description() ?: null,
+			'ean'               => $this->extract_ean( $product ),
+			'weight'            => $this->weight_as_number( $product->get_weight() ),
+			'productType'       => $this->map_product_type( $product ),
+			'isService'         => $product->is_virtual() && 'SERVICE' === $this->map_product_type( $product ),
+			'isDigitalProduct'  => $product->is_downloadable(),
+			'media'             => $media_key,
+			'gallery'           => $gallery_keys,
+			'pricing'           => array(
+				'salePrice'     => $base_price,
+				'purchasePrice' => 0,
+				'taxRate'       => $tax_rate,
 			),
-			'saleUnitId'       => isset( $overrides['saleUnitId'] ) ? $overrides['saleUnitId'] : '',
-			'purchaseUnitId'   => isset( $overrides['purchaseUnitId'] ) ? $overrides['purchaseUnitId'] : null,
-			'depositId'        => isset( $overrides['depositId'] ) ? $overrides['depositId'] : null,
-			'hash'             => '', // filled below
+			'discountPercent'   => $discount_percent > 0 ? $discount_percent : null,
+			'discountStartDate' => $discount_start,
+			'discountEndDate'   => $discount_end,
+			'saleUnitId'        => isset( $overrides['saleUnitId'] ) ? $overrides['saleUnitId'] : '',
+			'purchaseUnitId'    => isset( $overrides['purchaseUnitId'] ) ? $overrides['purchaseUnitId'] : null,
+			'depositId'         => isset( $overrides['depositId'] ) ? $overrides['depositId'] : null,
+			'hash'              => '', // filled below
 		);
 
 		$dto['hash'] = $this->payload_hash( $dto );
@@ -389,17 +410,20 @@ class Soldx_Sync_Engine {
 	 */
 	private function payload_hash( $dto ) {
 		$relevant = array(
-			'designation'      => isset( $dto['designation'] ) ? $dto['designation'] : null,
-			'slug'             => isset( $dto['slug'] ) ? $dto['slug'] : null,
-			'shortDescription' => isset( $dto['shortDescription'] ) ? $dto['shortDescription'] : null,
-			'description'      => isset( $dto['description'] ) ? $dto['description'] : null,
-			'weight'           => isset( $dto['weight'] ) ? $dto['weight'] : null,
-			'pricing'          => isset( $dto['pricing'] ) ? $dto['pricing'] : null,
-			'media'            => isset( $dto['media'] ) ? $dto['media'] : null,
-			'gallery'          => isset( $dto['gallery'] ) ? $dto['gallery'] : null,
-			'saleUnitId'       => isset( $dto['saleUnitId'] ) ? $dto['saleUnitId'] : null,
-			'purchaseUnitId'   => isset( $dto['purchaseUnitId'] ) ? $dto['purchaseUnitId'] : null,
-			'depositId'        => isset( $dto['depositId'] ) ? $dto['depositId'] : null,
+			'designation'       => isset( $dto['designation'] ) ? $dto['designation'] : null,
+			'slug'              => isset( $dto['slug'] ) ? $dto['slug'] : null,
+			'shortDescription'  => isset( $dto['shortDescription'] ) ? $dto['shortDescription'] : null,
+			'description'       => isset( $dto['description'] ) ? $dto['description'] : null,
+			'weight'            => isset( $dto['weight'] ) ? $dto['weight'] : null,
+			'pricing'           => isset( $dto['pricing'] ) ? $dto['pricing'] : null,
+			'discountPercent'   => isset( $dto['discountPercent'] ) ? $dto['discountPercent'] : null,
+			'discountStartDate' => isset( $dto['discountStartDate'] ) ? $dto['discountStartDate'] : null,
+			'discountEndDate'   => isset( $dto['discountEndDate'] ) ? $dto['discountEndDate'] : null,
+			'media'             => isset( $dto['media'] ) ? $dto['media'] : null,
+			'gallery'           => isset( $dto['gallery'] ) ? $dto['gallery'] : null,
+			'saleUnitId'        => isset( $dto['saleUnitId'] ) ? $dto['saleUnitId'] : null,
+			'purchaseUnitId'    => isset( $dto['purchaseUnitId'] ) ? $dto['purchaseUnitId'] : null,
+			'depositId'         => isset( $dto['depositId'] ) ? $dto['depositId'] : null,
 		);
 		return hash( 'sha256', wp_json_encode( $relevant ) );
 	}
