@@ -234,6 +234,7 @@ class Soldx_Sync_Engine {
 			'purchaseUnitId'    => isset( $overrides['purchaseUnitId'] ) ? $overrides['purchaseUnitId'] : null,
 			'depositId'         => isset( $overrides['depositId'] ) ? $overrides['depositId'] : null,
 			'categoryIds'       => $category_ids,
+			'tagIds'            => isset( $overrides['tagIds'] ) ? $overrides['tagIds'] : array(),
 			'hash'              => '', // filled below
 		);
 
@@ -430,6 +431,7 @@ class Soldx_Sync_Engine {
 			'purchaseUnitId'    => isset( $dto['purchaseUnitId'] ) ? $dto['purchaseUnitId'] : null,
 			'depositId'         => isset( $dto['depositId'] ) ? $dto['depositId'] : null,
 			'categoryIds'       => isset( $dto['categoryIds'] ) ? $dto['categoryIds'] : null,
+			'tagIds'            => isset( $dto['tagIds'] ) ? $dto['tagIds'] : null,
 		);
 		return hash( 'sha256', wp_json_encode( $relevant ) );
 	}

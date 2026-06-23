@@ -56,6 +56,8 @@ class Soldx_Admin_Articles {
 			array(),
 			SOLDX_VERSION
 		);
+		// SelectWoo for searchable tag multi-select.
+		wp_enqueue_script( 'selectWoo' );
 	}
 
 	/**
@@ -170,6 +172,10 @@ class Soldx_Admin_Articles {
 				}
 			}
 		}
+		// Multi-select tags: array of Studio tag IDs.
+		if ( isset( $raw[ $key ]['tagIds'] ) && is_array( $raw[ $key ]['tagIds'] ) ) {
+			$out['tagIds'] = array_values( array_filter( array_map( 'sanitize_text_field', $raw[ $key ]['tagIds'] ) ) );
+		}
 		// Checkbox: present = true, absent = false.
 		$out['published'] = isset( $raw[ $key ]['published'] );
 		return $out;
@@ -261,6 +267,10 @@ class Soldx_Admin_Articles {
 
 		soldx_flash_notice_maybe_print();
 
+		// Always bust the options cache so the page reflects the latest
+		// Studio state (new tags, renamed units, deleted categories, etc.).
+		delete_transient( 'soldx_establishment_options' );
+
 		// Fetch establishment options once for the whole page.
 		$options = $this->get_establishment_options();
 		if ( false === $options ) {
@@ -293,6 +303,21 @@ class Soldx_Admin_Articles {
 			}
 		}
 		$cats_url = soldx_admin_url( Soldx_Admin_Categories::PAGE_SLUG );
+
+		// Studio tags — group by `group` field, build slug→id lookup for auto-match.
+		$studio_tags  = isset( $options['tags'] ) && is_array( $options['tags'] ) ? $options['tags'] : array();
+		$tags_by_group = array();
+		$tag_slug_map  = array();
+		foreach ( $studio_tags as $stag ) {
+			$group = ! empty( $stag['group'] ) ? $stag['group'] : __( 'Other', 'soldx-woocommerce' );
+			if ( ! isset( $tags_by_group[ $group ] ) ) {
+				$tags_by_group[ $group ] = array();
+			}
+			$tags_by_group[ $group ][] = $stag;
+			if ( ! empty( $stag['slug'] ) ) {
+				$tag_slug_map[ $stag['slug'] ] = $stag['id'];
+			}
+		}
 
 		// Fall back to first available item when no config default is set.
 		if ( empty( $defaults['saleUnitId'] ) && ! empty( $units[0]['id'] ) ) {
@@ -382,6 +407,7 @@ class Soldx_Admin_Articles {
 							<th class="soldx-price"><?php esc_html_e( 'Reg. Price', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-price"><?php esc_html_e( 'Sale Price', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-cats"><?php esc_html_e( 'Categories', 'soldx-woocommerce' ); ?></th>
+							<th class="soldx-tags"><?php esc_html_e( 'Tags', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Sale unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Purchase unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-deposit"><?php esc_html_e( 'Deposit', 'soldx-woocommerce' ); ?></th>
@@ -392,7 +418,7 @@ class Soldx_Admin_Articles {
 					<tbody>
 						<?php if ( empty( $items ) ) : ?>
 							<tr>
-								<td colspan="12"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
+								<td colspan="13"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $items as $p ) : ?>
@@ -403,6 +429,17 @@ class Soldx_Admin_Articles {
 								$su = $this->stored_or_default( $map, 'saleUnitId', $defaults['saleUnitId'] );
 								$pu = $this->stored_or_default( $map, 'purchaseUnitId', $defaults['purchaseUnitId'] );
 								$dp = $this->stored_or_default( $map, 'depositId', $defaults['depositId'] );
+
+								// Auto-match WC tags → Studio tags by slug.
+								$wc_tag_slugs = wp_get_post_terms( $pid, 'product_tag', array( 'fields' => 'slugs' ) );
+								$auto_tag_ids = array();
+								if ( is_array( $wc_tag_slugs ) ) {
+									foreach ( $wc_tag_slugs as $tslug ) {
+										if ( isset( $tag_slug_map[ $tslug ] ) ) {
+											$auto_tag_ids[] = $tag_slug_map[ $tslug ];
+										}
+									}
+								}
 								?>
 								<tr>
 									<td class="soldx-check">
@@ -444,6 +481,23 @@ class Soldx_Admin_Articles {
 										}
 									}
 								?></td>
+								<td class="soldx-tags">
+									<select multiple name="overrides[<?php echo esc_attr( (string) $pid ); ?>][tagIds][]" class="soldx-select soldx-tag-select" data-placeholder="<?php esc_attr_e( 'Select tags…', 'soldx-woocommerce' ); ?>">
+										<?php foreach ( $tags_by_group as $group_label => $group_tags ) : ?>
+											<optgroup label="<?php echo esc_attr( ucfirst( $group_label ) ); ?>">
+											<?php foreach ( $group_tags as $stag ) : ?>
+												<?php
+												$tag_id   = isset( $stag['id'] ) ? $stag['id'] : '';
+												$tag_name = isset( $stag['name'] ) ? $stag['name'] : '';
+												$tag_fr   = ( isset( $stag['nameFr'] ) && '' !== $stag['nameFr'] ) ? $stag['nameFr'] : '';
+												$tag_lbl  = $tag_fr ? ( $tag_name . ' (' . $tag_fr . ')' ) : $tag_name;
+												?>
+												<option value="<?php echo esc_attr( $tag_id ); ?>"<?php echo in_array( $tag_id, $auto_tag_ids, true ) ? ' selected' : ''; ?>><?php echo esc_html( $tag_lbl ); ?></option>
+											<?php endforeach; ?>
+										</optgroup>
+										<?php endforeach; ?>
+									</select>
+								</td>
 									<td class="soldx-unit">
 										<?php echo $this->select_field( "overrides[{$pid}][saleUnitId]", $units, $su, 'designation', true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 									</td>
@@ -501,6 +555,19 @@ class Soldx_Admin_Articles {
 				});
 			}
 		})();
+		// SelectWoo for searchable tag multi-selects.
+		if (typeof jQuery !== 'undefined') {
+			jQuery(function($) {
+				$('.soldx-tag-select').each(function() {
+					$(this).selectWoo({
+						placeholder: $(this).data('placeholder') || 'Select tags…',
+						allowClear: true,
+						width: '100%',
+						closeOnSelect: false
+					});
+				});
+			});
+		}
 		</script>
 		<?php
 	}
