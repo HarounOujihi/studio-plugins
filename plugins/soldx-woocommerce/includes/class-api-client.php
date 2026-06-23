@@ -79,6 +79,52 @@ class Soldx_Api_Client {
 	}
 
 	/**
+	 * Create a Studio Category from the plugin's category mapping page.
+	 *
+	 * @param string $designation Category name.
+	 * @param string $id_parent   Optional Studio parent category ID.
+	 * @param string $image       Optional S3 key for category image.
+	 * @return array {
+	 *     @type string $id
+	 *     @type string $reference
+	 *     @type string $designation
+	 *     @type string $slug
+	 * }
+	 *
+	 * @throws Soldx_Api_Exception
+	 */
+	public function create_category( $designation, $id_parent = '', $image = '' ) {
+		$body = array( 'designation' => $designation );
+		if ( '' !== $id_parent ) {
+			$body['idParent'] = $id_parent;
+		}
+		if ( '' !== $image ) {
+			$body['image'] = $image;
+		}
+		return $this->request( 'POST', '/api/plugin/categories', $body );
+	}
+
+	/**
+	 * Update a Studio Category's image + logo via PATCH.
+	 *
+	 * Called when saving category mappings — for each mapped WC category
+	 * that has a thumbnail, the image is uploaded to S3 and this method
+	 * sets both `image` and `logo` on the Studio category.
+	 *
+	 * @param string $studio_cat_id Studio category ID.
+	 * @param string $image_key     S3 key (e.g. `<org-id>/cat-abc.jpg`).
+	 *
+	 * @throws Soldx_Api_Exception On transport failure or HTTP error.
+	 */
+	public function update_category_image( $studio_cat_id, $image_key ) {
+		return $this->request(
+			'PATCH',
+			'/api/plugin/categories/' . rawurlencode( $studio_cat_id ),
+			array( 'image' => $image_key )
+		);
+	}
+
+	/**
 	 * Read the current mapping state for a WC product (externalId = WC post_id).
 	 * Used by the "is this already synced?" check and to preselect dropdowns
 	 * from the last-synced overrides.

@@ -203,6 +203,10 @@ class Soldx_Sync_Engine {
 			$discount_end   = $to ? $to->format( 'c' ) : null;
 		}
 
+		// Categories: resolve WC product_cat IDs → Studio category IDs.
+		$wc_cat_ids  = $product->get_category_ids();
+		$category_ids = Soldx_Admin_Categories::resolve( $wc_cat_ids );
+
 		$dto = array(
 			'externalId'        => $id,
 			'externalSlug'      => '' !== $sku ? $sku : null,
@@ -229,6 +233,7 @@ class Soldx_Sync_Engine {
 			'saleUnitId'        => isset( $overrides['saleUnitId'] ) ? $overrides['saleUnitId'] : '',
 			'purchaseUnitId'    => isset( $overrides['purchaseUnitId'] ) ? $overrides['purchaseUnitId'] : null,
 			'depositId'         => isset( $overrides['depositId'] ) ? $overrides['depositId'] : null,
+			'categoryIds'       => $category_ids,
 			'hash'              => '', // filled below
 		);
 
@@ -424,6 +429,7 @@ class Soldx_Sync_Engine {
 			'saleUnitId'        => isset( $dto['saleUnitId'] ) ? $dto['saleUnitId'] : null,
 			'purchaseUnitId'    => isset( $dto['purchaseUnitId'] ) ? $dto['purchaseUnitId'] : null,
 			'depositId'         => isset( $dto['depositId'] ) ? $dto['depositId'] : null,
+			'categoryIds'       => isset( $dto['categoryIds'] ) ? $dto['categoryIds'] : null,
 		);
 		return hash( 'sha256', wp_json_encode( $relevant ) );
 	}

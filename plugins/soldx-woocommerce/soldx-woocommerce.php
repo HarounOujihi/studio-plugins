@@ -53,6 +53,7 @@ function soldx_bootstrap_plugin() {
 	require_once SOLDX_PLUGIN_DIR . 'includes/class-api-client.php';
 	require_once SOLDX_PLUGIN_DIR . 'includes/class-sync-engine.php';
 	require_once SOLDX_PLUGIN_DIR . 'includes/class-admin-settings.php';
+	require_once SOLDX_PLUGIN_DIR . 'includes/class-admin-categories.php';
 	require_once SOLDX_PLUGIN_DIR . 'includes/class-admin-articles.php';
 	require_once SOLDX_PLUGIN_DIR . 'includes/helpers.php';
 
@@ -60,6 +61,7 @@ function soldx_bootstrap_plugin() {
 	Soldx_Mapping_Store::instance();
 	Soldx_Sync_Engine::instance();
 	Soldx_Admin_Settings::instance();
+	Soldx_Admin_Categories::instance();
 	Soldx_Admin_Articles::instance();
 }
 

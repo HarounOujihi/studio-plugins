@@ -282,6 +282,18 @@ class Soldx_Admin_Articles {
 		$deposits = isset( $options['deposits'] ) && is_array( $options['deposits'] ) ? $options['deposits'] : array();
 		$defaults = $this->get_defaults();
 
+		// Build a Studio category lookup map (id → designation) for badges.
+		$studio_cats = array();
+		if ( isset( $options['categories'] ) && is_array( $options['categories'] ) ) {
+			foreach ( $options['categories'] as $cat ) {
+				$id = isset( $cat['id'] ) ? $cat['id'] : '';
+				$studio_cats[ $id ] = ! empty( $cat['designation'] )
+					? $cat['designation']
+					: ( ! empty( $cat['reference'] ) ? $cat['reference'] : $id );
+			}
+		}
+		$cats_url = soldx_admin_url( Soldx_Admin_Categories::PAGE_SLUG );
+
 		// Fall back to first available item when no config default is set.
 		if ( empty( $defaults['saleUnitId'] ) && ! empty( $units[0]['id'] ) ) {
 			$defaults['saleUnitId'] = $units[0]['id'];
@@ -322,7 +334,9 @@ class Soldx_Admin_Articles {
 			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Articles', 'soldx-woocommerce' ); ?>
 				<a class="page-title-action" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Refresh', 'soldx-woocommerce' ); ?></a>
 			</h1>
-			<p class="soldx-subtitle"><?php esc_html_e( 'Select WooCommerce products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.', 'soldx-woocommerce' ); ?></p>
+			<p class="soldx-subtitle"><?php esc_html_e( 'Select WooCommerce products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.', 'soldx-woocommerce' ); ?>
+				<a class="page-title-action" href="<?php echo esc_url( $cats_url ); ?>"><?php esc_html_e( 'Category Mapping', 'soldx-woocommerce' ); ?></a>
+			</p>
 
 			<form method="get" class="soldx-search-form">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
@@ -367,6 +381,7 @@ class Soldx_Admin_Articles {
 							<th class="soldx-sku"><?php esc_html_e( 'SKU', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-price"><?php esc_html_e( 'Reg. Price', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-price"><?php esc_html_e( 'Sale Price', 'soldx-woocommerce' ); ?></th>
+							<th class="soldx-cats"><?php esc_html_e( 'Categories', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Sale unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-unit"><?php esc_html_e( 'Purchase unit', 'soldx-woocommerce' ); ?></th>
 							<th class="soldx-deposit"><?php esc_html_e( 'Deposit', 'soldx-woocommerce' ); ?></th>
@@ -377,7 +392,7 @@ class Soldx_Admin_Articles {
 					<tbody>
 						<?php if ( empty( $items ) ) : ?>
 							<tr>
-								<td colspan="11"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
+								<td colspan="12"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $items as $p ) : ?>
@@ -417,6 +432,17 @@ class Soldx_Admin_Articles {
 								<td class="soldx-price"><?php
 									$sp = $p->get_sale_price();
 									echo wp_kses_post( '' !== $sp ? wc_price( $sp ) : '—' );
+								?></td>
+								<td class="soldx-cats"><?php
+									$resolved = Soldx_Admin_Categories::resolve( $p->get_category_ids() );
+									if ( empty( $resolved ) ) {
+										echo '<span class="soldx-muted">' . esc_html__( '—', 'soldx-woocommerce' ) . '</span>';
+									} else {
+										foreach ( $resolved as $cid ) {
+											$label = isset( $studio_cats[ $cid ] ) ? $studio_cats[ $cid ] : $cid;
+											echo '<span class="soldx-badge soldx-badge--cat">' . esc_html( $label ) . '</span> ';
+										}
+									}
 								?></td>
 									<td class="soldx-unit">
 										<?php echo $this->select_field( "overrides[{$pid}][saleUnitId]", $units, $su, 'designation', true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>

@@ -167,6 +167,7 @@ class Soldx_Admin_Settings {
 		$etb_name        = Soldx_Auth::establishment_name();
 		$is_connected    = '' !== $integration_id;
 		$articles_url    = soldx_admin_url( Soldx_Admin_Articles::PAGE_SLUG );
+		$categories_url  = soldx_admin_url( Soldx_Admin_Categories::PAGE_SLUG );
 		?>
 		<div class="wrap soldx-wrap">
 			<h1 class="soldx-title"><?php echo esc_html__( 'Soldx Sync', 'soldx-woocommerce' ); ?></h1>
@@ -194,6 +195,9 @@ class Soldx_Admin_Settings {
 						<p>
 							<a class="button button-primary" href="<?php echo esc_url( $articles_url ); ?>">
 								<?php esc_html_e( 'Go to Articles', 'soldx-woocommerce' ); ?>
+							</a>
+							<a class="button" href="<?php echo esc_url( $categories_url ); ?>">
+								<?php esc_html_e( 'Category Mapping', 'soldx-woocommerce' ); ?>
 							</a>
 						</p>
 					</div>
