@@ -37,8 +37,8 @@ class Soldx_Admin_Settings {
 	public function register_menu() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Soldx Sync', 'soldx-woocommerce' ),
-			__( 'Soldx Sync', 'soldx-woocommerce' ),
+			__( 'Soldx Sync', 'soldx-for-woocommerce' ),
+			__( 'Soldx Sync', 'soldx-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -72,10 +72,10 @@ class Soldx_Admin_Settings {
 			return;
 		}
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 		if ( ! soldx_verify_nonce( 'soldx_settings' ) ) {
-			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-for-woocommerce' ) );
 		}
 		switch ( $action ) {
 			case 'save':
@@ -97,9 +97,9 @@ class Soldx_Admin_Settings {
 		);
 		$ok = Soldx_Auth::save_settings( $input );
 		if ( $ok ) {
-			soldx_flash_notice_set( __( 'Settings saved.', 'soldx-woocommerce' ), 'success' );
+			soldx_flash_notice_set( __( 'Settings saved.', 'soldx-for-woocommerce' ), 'success' );
 		} else {
-			soldx_flash_notice_set( __( 'Settings could not be saved. Check the API key format (64 hex characters) and Studio URL.', 'soldx-woocommerce' ), 'error' );
+			soldx_flash_notice_set( __( 'Settings could not be saved. Check the API key format (64 hex characters) and Studio URL.', 'soldx-for-woocommerce' ), 'error' );
 		}
 		wp_safe_redirect( soldx_admin_url( self::PAGE_SLUG ) );
 		exit;
@@ -114,7 +114,7 @@ class Soldx_Admin_Settings {
 		Soldx_Auth::save_settings( $input );
 
 		if ( ! Soldx_Auth::is_configured() ) {
-			soldx_flash_notice_set( __( 'Please enter both the Studio URL and the API key first.', 'soldx-woocommerce' ), 'warning' );
+			soldx_flash_notice_set( __( 'Please enter both the Studio URL and the API key first.', 'soldx-for-woocommerce' ), 'warning' );
 			wp_safe_redirect( soldx_admin_url( self::PAGE_SLUG ) );
 			exit;
 		}
@@ -123,11 +123,11 @@ class Soldx_Admin_Settings {
 			$result = soldx_api()->authenticate();
 			Soldx_Auth::save_auth_result( $result );
 
-			$etb = ! empty( $result['establishmentName'] ) ? $result['establishmentName'] : __( '(unknown)', 'soldx-woocommerce' );
+			$etb = ! empty( $result['establishmentName'] ) ? $result['establishmentName'] : __( '(unknown)', 'soldx-for-woocommerce' );
 			soldx_flash_notice_set(
 				sprintf(
 					/* translators: %s: establishment name */
-					__( 'Connection successful. Linked to <strong>%s</strong>.', 'soldx-woocommerce' ),
+					__( 'Connection successful. Linked to <strong>%s</strong>.', 'soldx-for-woocommerce' ),
 					esc_html( $etb )
 				),
 				'success'
@@ -136,7 +136,7 @@ class Soldx_Admin_Settings {
 			soldx_flash_notice_set(
 				sprintf(
 					/* translators: %s: error message */
-					__( 'Connection failed: %s', 'soldx-woocommerce' ),
+					__( 'Connection failed: %s', 'soldx-for-woocommerce' ),
 					esc_html( $e->getMessage() )
 				),
 				'error'
@@ -149,7 +149,7 @@ class Soldx_Admin_Settings {
 
 	private function handle_disconnect() {
 		Soldx_Auth::reset();
-		soldx_flash_notice_set( __( 'Plugin disconnected. Your WooCommerce products are untouched.', 'soldx-woocommerce' ), 'info' );
+		soldx_flash_notice_set( __( 'Plugin disconnected. Your WooCommerce products are untouched.', 'soldx-for-woocommerce' ), 'info' );
 		wp_safe_redirect( soldx_admin_url( self::PAGE_SLUG ) );
 		exit;
 	}
@@ -159,7 +159,7 @@ class Soldx_Admin_Settings {
 	 */
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 		$studio_url      = Soldx_Auth::studio_url();
 		$api_key         = Soldx_Auth::api_key();
@@ -170,8 +170,8 @@ class Soldx_Admin_Settings {
 		$categories_url  = soldx_admin_url( Soldx_Admin_Categories::PAGE_SLUG );
 		?>
 		<div class="wrap soldx-wrap">
-			<h1 class="soldx-title"><?php echo esc_html__( 'Soldx Sync', 'soldx-woocommerce' ); ?></h1>
-			<p class="soldx-subtitle"><?php esc_html_e( 'Connect your WooCommerce shop to Soldx Studio to push products into Studio.', 'soldx-woocommerce' ); ?></p>
+			<h1 class="soldx-title"><?php echo esc_html__( 'Soldx Sync', 'soldx-for-woocommerce' ); ?></h1>
+			<p class="soldx-subtitle"><?php esc_html_e( 'Connect your WooCommerce shop to Soldx Studio to push products into Studio.', 'soldx-for-woocommerce' ); ?></p>
 
 			<?php soldx_flash_notice_maybe_print(); ?>
 
@@ -180,13 +180,13 @@ class Soldx_Admin_Settings {
 					<span class="dashicons dashicons-shield-alt"></span>
 				</div>
 				<div class="soldx-safety-body">
-					<h3><?php esc_html_e( 'Your store is safe', 'soldx-woocommerce' ); ?></h3>
+					<h3><?php esc_html_e( 'Your store is safe', 'soldx-for-woocommerce' ); ?></h3>
 					<ul>
-						<li><?php esc_html_e( 'This plugin is read-only: it never modifies, deletes, or reorders your WooCommerce products, orders, or settings.', 'soldx-woocommerce' ); ?></li>
-						<li><?php esc_html_e( 'Nothing happens automatically. Products are sent to Studio only when you manually click "Push to Studio".', 'soldx-woocommerce' ); ?></li>
-						<li><?php esc_html_e( 'No background tasks, no cron jobs, no webhooks — zero automation.', 'soldx-woocommerce' ); ?></li>
-						<li><?php esc_html_e( 'You choose exactly which products to push, one by one.', 'soldx-woocommerce' ); ?></li>
-						<li><?php esc_html_e( 'Disconnect at any time. Your WooCommerce data is never affected.', 'soldx-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'This plugin is read-only: it never modifies, deletes, or reorders your WooCommerce products, orders, or settings.', 'soldx-for-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'Nothing happens automatically. Products are sent to Studio only when you manually click "Push to Studio".', 'soldx-for-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'No background tasks, no cron jobs, no webhooks — zero automation.', 'soldx-for-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'You choose exactly which products to push, one by one.', 'soldx-for-woocommerce' ); ?></li>
+						<li><?php esc_html_e( 'Disconnect at any time. Your WooCommerce data is never affected.', 'soldx-for-woocommerce' ); ?></li>
 					</ul>
 				</div>
 			</div>
@@ -196,24 +196,24 @@ class Soldx_Admin_Settings {
 					<div class="soldx-card-body">
 						<h2 class="soldx-card-title">
 							<span class="soldx-dot soldx-dot--ok"></span>
-							<?php esc_html_e( 'Connected', 'soldx-woocommerce' ); ?>
+							<?php esc_html_e( 'Connected', 'soldx-for-woocommerce' ); ?>
 						</h2>
 						<p class="soldx-card-meta">
 							<?php
 							printf(
 								/* translators: 1: establishment name, 2: integration id (short) */
-								esc_html__( 'Establishment: %1$s · Integration: %2$s', 'soldx-woocommerce' ),
-								'<strong>' . esc_html( $etb_name ? $etb_name : __( '—', 'soldx-woocommerce' ) ) . '</strong>',
+								esc_html__( 'Establishment: %1$s · Integration: %2$s', 'soldx-for-woocommerce' ),
+								'<strong>' . esc_html( $etb_name ? $etb_name : __( '—', 'soldx-for-woocommerce' ) ) . '</strong>',
 								'<code>' . esc_html( substr( $integration_id, 0, 8 ) ) . '</code>'
 							);
 							?>
 						</p>
 						<p>
 							<a class="button button-primary" href="<?php echo esc_url( $articles_url ); ?>">
-								<?php esc_html_e( 'Go to Articles', 'soldx-woocommerce' ); ?>
+								<?php esc_html_e( 'Go to Articles', 'soldx-for-woocommerce' ); ?>
 							</a>
 							<a class="button" href="<?php echo esc_url( $categories_url ); ?>">
-								<?php esc_html_e( 'Category Mapping', 'soldx-woocommerce' ); ?>
+								<?php esc_html_e( 'Category Mapping', 'soldx-for-woocommerce' ); ?>
 							</a>
 						</p>
 					</div>
@@ -225,7 +225,7 @@ class Soldx_Admin_Settings {
 				<table class="form-table" role="presentation">
 					<tr>
 						<th scope="row">
-							<label for="studio_url"><?php esc_html_e( 'Studio URL', 'soldx-woocommerce' ); ?></label>
+							<label for="studio_url"><?php esc_html_e( 'Studio URL', 'soldx-for-woocommerce' ); ?></label>
 						</th>
 						<td>
 							<input
@@ -237,12 +237,12 @@ class Soldx_Admin_Settings {
 								value="<?php echo esc_attr( $studio_url ); ?>"
 								autocomplete="off"
 							/>
-							<p class="description"><?php esc_html_e( 'The base URL of your Soldx Studio installation (no trailing slash).', 'soldx-woocommerce' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The base URL of your Soldx Studio installation (no trailing slash).', 'soldx-for-woocommerce' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="api_key"><?php esc_html_e( 'API Key', 'soldx-woocommerce' ); ?></label>
+							<label for="api_key"><?php esc_html_e( 'API Key', 'soldx-for-woocommerce' ); ?></label>
 						</th>
 						<td>
 							<input
@@ -250,7 +250,7 @@ class Soldx_Admin_Settings {
 								id="api_key"
 								name="api_key"
 								class="regular-text"
-								placeholder="<?php echo $api_key ? str_repeat( '•', 12 ) : ''; ?>"
+								placeholder="<?php echo $api_key ? esc_attr( str_repeat( '•', 12 ) ) : ''; ?>"
 								value=""
 								autocomplete="new-password"
 							/>
@@ -258,9 +258,9 @@ class Soldx_Admin_Settings {
 								<?php
 								if ( $api_key ) {
 									echo '<code>' . esc_html( substr( $api_key, 0, 6 ) ) . '…' . esc_html( substr( $api_key, -4 ) ) . '</code> ';
-									esc_html_e( 'Already set. Leave blank to keep the current key.', 'soldx-woocommerce' );
+									esc_html_e( 'Already set. Leave blank to keep the current key.', 'soldx-for-woocommerce' );
 								} else {
-									esc_html_e( 'Get this from Studio → Settings → Plugins → Activate WooCommerce.', 'soldx-woocommerce' );
+									esc_html_e( 'Get this from Studio → Settings → Plugins → Activate WooCommerce.', 'soldx-for-woocommerce' );
 								}
 								?>
 							</p>
@@ -270,28 +270,28 @@ class Soldx_Admin_Settings {
 
 				<p class="submit soldx-actions">
 					<button type="submit" name="soldx_action" value="save" class="button button-secondary">
-						<?php esc_html_e( 'Save settings', 'soldx-woocommerce' ); ?>
+						<?php esc_html_e( 'Save settings', 'soldx-for-woocommerce' ); ?>
 					</button>
 					<button type="submit" name="soldx_action" value="test" class="button button-primary">
-						<?php esc_html_e( 'Save & Test connection', 'soldx-woocommerce' ); ?>
+						<?php esc_html_e( 'Save & Test connection', 'soldx-for-woocommerce' ); ?>
 					</button>
 					<?php if ( $is_connected ) : ?>
-						<button type="submit" name="soldx_action" value="disconnect" class="button button-link-delete" onclick="return confirm('<?php echo esc_js( __( 'Disconnect? Products already synced will stay in place but will no longer be updated.', 'soldx-woocommerce' ) ); ?>');">
-							<?php esc_html_e( 'Disconnect', 'soldx-woocommerce' ); ?>
+						<button type="submit" name="soldx_action" value="disconnect" class="button button-link-delete" onclick="return confirm('<?php echo esc_js( __( 'Disconnect? Products already synced will stay in place but will no longer be updated.', 'soldx-for-woocommerce' ) ); ?>');">
+							<?php esc_html_e( 'Disconnect', 'soldx-for-woocommerce' ); ?>
 						</button>
 					<?php endif; ?>
 				</p>
 			</form>
 
 			<div class="soldx-help">
-				<h3><?php esc_html_e( 'How sync works', 'soldx-woocommerce' ); ?></h3>
+				<h3><?php esc_html_e( 'How sync works', 'soldx-for-woocommerce' ); ?></h3>
 				<ul>
-					<li><?php esc_html_e( 'One-way push: WooCommerce → Studio only. Studio never writes back to your shop.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'Manual only: you pick which products to push on the Articles page — no automatic syncing, ever.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'For each product you choose a sale unit (required), a purchase unit, and a deposit.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'Pricing is synced; stock is intentionally NOT synced.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'Re-pushing a product updates the matching Studio article in Studio — not in WooCommerce.', 'soldx-woocommerce' ); ?></li>
-					<li><?php esc_html_e( 'Uninstalling or disconnecting the plugin leaves your WooCommerce store exactly as it was.', 'soldx-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'One-way push: WooCommerce → Studio only. Studio never writes back to your shop.', 'soldx-for-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Manual only: you pick which products to push on the Articles page — no automatic syncing, ever.', 'soldx-for-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'For each product you choose a sale unit (required), a purchase unit, and a deposit.', 'soldx-for-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Pricing is synced; stock is intentionally NOT synced.', 'soldx-for-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Re-pushing a product updates the matching Studio article in Studio — not in WooCommerce.', 'soldx-for-woocommerce' ); ?></li>
+					<li><?php esc_html_e( 'Uninstalling or disconnecting the plugin leaves your WooCommerce store exactly as it was.', 'soldx-for-woocommerce' ); ?></li>
 				</ul>
 			</div>
 		</div>

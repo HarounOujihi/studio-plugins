@@ -1,8 +1,8 @@
 === Soldx for WooCommerce ===
-Contributors: soldx
-Tags: woocommerce, sync, inventory, soldx, studio, erp
+Contributors: automato
+Tags: woocommerce, sync, inventory, soldx, studio
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 0.1.0
 License: GPLv2 or later

@@ -38,8 +38,8 @@ class Soldx_Admin_Categories {
 	public function register_menu() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Soldx Categories', 'soldx-woocommerce' ),
-			__( 'Soldx Categories', 'soldx-woocommerce' ),
+			__( 'Soldx Categories', 'soldx-for-woocommerce' ),
+			__( 'Soldx Categories', 'soldx-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -59,6 +59,18 @@ class Soldx_Admin_Categories {
 		// SelectWoo = WooCommerce's Select2 fork — makes the Studio category
 		// dropdowns searchable (shipped with WC core).
 		wp_enqueue_script( 'selectWoo' );
+		wp_enqueue_script(
+			'soldx-admin-categories',
+			SOLDX_PLUGIN_URL . 'admin/assets/admin-categories.js',
+			array( 'jquery', 'selectWoo' ),
+			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin-categories.js' ),
+			true
+		);
+		wp_localize_script( 'soldx-admin-categories', 'soldxCategories', array(
+			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+			'ajaxNonce'        => wp_create_nonce( 'soldx_create_category' ),
+			'searchPlaceholder' => __( 'Search Studio category…', 'soldx-for-woocommerce' ),
+		) );
 	}
 
 	// ------------------------------------------------------------------
@@ -73,10 +85,10 @@ class Soldx_Admin_Categories {
 			return;
 		}
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 		if ( ! soldx_verify_nonce( 'soldx_categories' ) ) {
-			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-for-woocommerce' ) );
 		}
 
 		$raw      = isset( $_POST['mapping'] ) && is_array( $_POST['mapping'] ) ? wp_unslash( $_POST['mapping'] ) : array();
@@ -111,13 +123,13 @@ class Soldx_Admin_Categories {
 
 		$notice_msg = sprintf(
 			/* translators: %d: number of mapped categories */
-			_n( '%d category mapping saved.', '%d category mappings saved.', count( $clean ), 'soldx-woocommerce' ),
+			_n( '%d category mapping saved.', '%d category mappings saved.', count( $clean ), 'soldx-for-woocommerce' ),
 			count( $clean )
 		);
 		if ( $image_synced > 0 ) {
 			$notice_msg .= sprintf(
 				/* translators: %d: number of synced images */
-				_n( ' %d category image synced.', ' %d category images synced.', $image_synced, 'soldx-woocommerce' ),
+				_n( ' %d category image synced.', ' %d category images synced.', $image_synced, 'soldx-for-woocommerce' ),
 				$image_synced
 			);
 		}
@@ -201,13 +213,14 @@ class Soldx_Admin_Categories {
 	 */
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 
 		if ( ! Soldx_Auth::is_configured() ) {
 			echo '<div class="wrap"><div class="notice notice-warning"><p>';
 			printf(
-				wp_kses_post( __( 'Soldx is not configured yet. <a href="%s">Configure the plugin</a> first.', 'soldx-woocommerce' ) ),
+				/* translators: %s: settings URL */
+				wp_kses_post( __( 'Soldx is not configured yet. <a href="%s">Configure the plugin</a> first.', 'soldx-for-woocommerce' ) ),
 				esc_url( soldx_admin_url( Soldx_Admin_Settings::PAGE_SLUG ) )
 			);
 			echo '</p></div></div>';
@@ -238,20 +251,19 @@ class Soldx_Admin_Categories {
 
 		$mapping    = self::get_mapping();
 		$base_url   = soldx_admin_url( self::PAGE_SLUG );
-		$ajax_nonce = wp_create_nonce( 'soldx_create_category' );
-		$ajax_url   = admin_url( 'admin-ajax.php' );
 		?>
 		<div class="wrap soldx-wrap">
-			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Categories', 'soldx-woocommerce' ); ?>
-				<a class="page-title-action" href="<?php echo esc_url( add_query_arg( 'refresh', '1', $base_url ) ); ?>"><?php esc_html_e( 'Refresh', 'soldx-woocommerce' ); ?></a>
+			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Categories', 'soldx-for-woocommerce' ); ?>
+				<a class="page-title-action" href="<?php echo esc_url( add_query_arg( 'refresh', '1', $base_url ) ); ?>"><?php esc_html_e( 'Refresh', 'soldx-for-woocommerce' ); ?></a>
 			</h1>
-			<p class="soldx-subtitle"><?php esc_html_e( 'Map your WooCommerce categories to Soldx Studio categories. Products pushed to Studio will be auto-categorized based on these mappings.', 'soldx-woocommerce' ); ?></p>
+			<p class="soldx-subtitle"><?php esc_html_e( 'Map your WooCommerce categories to Soldx Studio categories. Products pushed to Studio will be auto-categorized based on these mappings.', 'soldx-for-woocommerce' ); ?></p>
 
 			<?php if ( empty( $studio_cats ) ) : ?>
 				<div class="notice notice-warning inline">
 					<p><?php
 						printf(
-							wp_kses_post( __( 'No Studio categories found. You can create them directly from this page using the "+ Studio" buttons, or create them in Studio first and then <a href="%s">refresh</a>.', 'soldx-woocommerce' ) ),
+							/* translators: %s: refresh URL */
+							wp_kses_post( __( 'No Studio categories found. You can create them directly from this page using the "+ Studio" buttons, or create them in Studio first and then <a href="%s">refresh</a>.', 'soldx-for-woocommerce' ) ),
 							esc_url( $base_url )
 						);
 					?></p>
@@ -260,16 +272,16 @@ class Soldx_Admin_Categories {
 
 			<?php if ( is_wp_error( $wc_cats ) || empty( $wc_cats ) ) : ?>
 				<div class="notice notice-info inline">
-					<p><?php esc_html_e( 'No WooCommerce categories found.', 'soldx-woocommerce' ); ?></p>
+					<p><?php esc_html_e( 'No WooCommerce categories found.', 'soldx-for-woocommerce' ); ?></p>
 				</div>
 			<?php else : ?>
 				<p>
 					<button type="button" class="button soldx-create-all-btn" id="soldx-create-all">
-						<?php esc_html_e( 'Create All Unmapped in Studio', 'soldx-woocommerce' ); ?>
+						<?php esc_html_e( 'Create All Unmapped in Studio', 'soldx-for-woocommerce' ); ?>
 					</button>
 				</p>
 				<p class="soldx-search-wrap">
-					<input type="search" id="soldx-cat-search" class="regular-text" placeholder="<?php esc_attr_e( 'Filter categories…', 'soldx-woocommerce' ); ?>" />
+					<input type="search" id="soldx-cat-search" class="regular-text" placeholder="<?php esc_attr_e( 'Filter categories…', 'soldx-for-woocommerce' ); ?>" />
 					<span class="soldx-search-count"></span>
 				</p>
 				<form method="post" class="soldx-sync-form">
@@ -279,8 +291,8 @@ class Soldx_Admin_Categories {
 					<table class="widefat striped soldx-table">
 						<thead>
 							<tr>
-								<th style="width:40%;"><?php esc_html_e( 'WooCommerce Category', 'soldx-woocommerce' ); ?></th>
-								<th><?php esc_html_e( 'Studio Category', 'soldx-woocommerce' ); ?></th>
+								<th style="width:40%;"><?php esc_html_e( 'WooCommerce Category', 'soldx-for-woocommerce' ); ?></th>
+								<th><?php esc_html_e( 'Studio Category', 'soldx-for-woocommerce' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -298,7 +310,7 @@ class Soldx_Admin_Categories {
 									</td>
 									<td class="soldx-cat-cell">
 										<select name="mapping[<?php echo esc_attr( (string) $term->term_id ); ?>]" class="soldx-select soldx-cat-select">
-											<option value=""><?php esc_html_e( '— Not mapped —', 'soldx-woocommerce' ); ?></option>
+											<option value=""><?php esc_html_e( '— Not mapped —', 'soldx-for-woocommerce' ); ?></option>
 											<?php foreach ( $studio_cats as $cat ) : ?>
 												<?php
 												$label = ! empty( $cat['designation'] ) ? $cat['designation'] : ( ! empty( $cat['reference'] ) ? $cat['reference'] : $cat['id'] );
@@ -317,7 +329,7 @@ class Soldx_Admin_Categories {
 											data-wc-name="<?php echo esc_attr( $term->name ); ?>"
 											data-wc-term-id="<?php echo esc_attr( (string) $term->term_id ); ?>"
 											data-wc-parent="<?php echo esc_attr( (string) $term->parent ); ?>"
-										><?php esc_html_e( '+ Studio', 'soldx-woocommerce' ); ?></button>
+										><?php esc_html_e( '+ Studio', 'soldx-for-woocommerce' ); ?></button>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -326,223 +338,10 @@ class Soldx_Admin_Categories {
 
 					<p class="submit">
 						<button type="submit" class="button button-primary">
-							<?php esc_html_e( 'Save Mappings', 'soldx-woocommerce' ); ?>
+							<?php esc_html_e( 'Save Mappings', 'soldx-for-woocommerce' ); ?>
 						</button>
 					</p>
 				</form>
-
-				<script>
-				(function($) {
-					'use strict';
-
-					var ajaxUrl   = '<?php echo esc_js( $ajax_url ); ?>';
-					var ajaxNonce = '<?php echo esc_js( $ajax_nonce ); ?>';
-
-					/**
-					 * Live search/filter for the categories table.
-					 */
-					$('#soldx-cat-search').on('input', function() {
-						var query = $(this).val().toLowerCase().trim();
-						var $rows = $('.soldx-table tbody tr');
-						var visible = 0;
-						$rows.each(function() {
-							var text = $(this).find('td').first().text().toLowerCase();
-							var match = !query || text.indexOf(query) !== -1;
-							$(this).toggle(match);
-							if (match) visible++;
-						});
-						$('.soldx-search-count').text(
-							query ? visible + ' / ' + $rows.length + ' matches' : ''
-						);
-					});
-
-					/**
-					 * Make Studio category dropdowns searchable via SelectWoo
-					 * (WC's Select2 fork). If SelectWoo isn't available the
-					 * selects fall back to plain HTML dropdowns.
-					 */
-					if ($.fn.selectWoo) {
-						$('.soldx-cat-select').selectWoo({
-							placeholder: '<?php echo esc_js( __( 'Search Studio category…', 'soldx-woocommerce' ) ); ?>',
-							allowClear: true,
-							width: '65%'
-						});
-					}
-
-					/**
-					 * Add a newly-created category as an <option> to every
-					 * dropdown on the page.
-					 */
-					function addCategoryToAllSelects( cat ) {
-						var label = cat.designation || cat.reference || cat.id;
-						$('.soldx-cat-select').each(function() {
-							if ($(this).find('option[value="' + cat.id + '"]').length === 0) {
-								$(this).append('<option value="' + cat.id + '">' + label + '</option>');
-							}
-						});
-					}
-
-					/**
-					 * Resolve the Studio parent ID for a button.
-					 *
-					 * Checks data-wc-parent to find the WC parent term, then
-					 * looks up that parent's row select value (its Studio
-					 * category ID). Returns '' if no parent or parent not mapped.
-					 */
-					function resolveParentId( btn ) {
-						var wcParent = String(btn.data('wc-parent') || '0');
-						if (!wcParent || wcParent === '0') return '';
-						var parentBtn = $('.soldx-create-cat-btn[data-wc-term-id="' + wcParent + '"]');
-						if (!parentBtn.length) return '';
-						var parentSel = parentBtn.siblings('.soldx-cat-select');
-						return parentSel.val() || '';
-					}
-
-					/**
-					 * Create a single category via AJAX.
-					 *
-					 * @param {string} name     WC category name.
-					 * @param {string} idParent Studio parent category ID ('' if none).
-					 * @param {string} termId   WC term ID (for image lookup).
-					 * @return {Promise} Resolves with the created category object.
-					 */
-					function createCategory(name, idParent, termId) {
-						return $.post(ajaxUrl, {
-							action:      'soldx_create_category',
-							nonce:       ajaxNonce,
-							designation: name,
-							idParent:    idParent || '',
-							wcTermId:    termId || ''
-						}).then(function(resp) {
-							if (resp && resp.success) {
-								return resp.data;
-							}
-							throw new Error((resp && resp.data && resp.data.message) || 'Unknown error');
-						});
-					}
-
-					/**
-					 * Handle a single "+ Studio" button click.
-					 */
-					$('.soldx-create-cat-btn').on('click', function() {
-						var btn      = $(this);
-						var name     = btn.data('wc-name');
-						var termId   = String(btn.data('wc-term-id') || '');
-						var idParent = resolveParentId(btn);
-						var sel      = btn.siblings('.soldx-cat-select');
-
-						btn.prop('disabled', true).text('Creating…');
-
-						createCategory(name, idParent, termId).then(function(cat) {
-							addCategoryToAllSelects(cat);
-							sel.val(cat.id).trigger("change");
-							btn.removeClass('button-secondary').addClass('button-primary').text('✓ Created').prop('disabled', true);
-						}).catch(function(err) {
-							btn.prop('disabled', false).text('+ Studio');
-							alert('Error creating category: ' + err.message);
-						});
-					});
-
-					/**
-					 * "Create All Unmapped" — processes rows by depth so that
-					 * parents are always created before children. Uses a
-					 * createdMap to pass parent IDs to children created in
-					 * the same batch.
-					 */
-					$('#soldx-create-all').on('click', function() {
-						var btn  = $(this);
-						var rows = [];
-
-						// Collect all unmapped rows.
-						$('.soldx-cat-select').each(function() {
-							if (!$(this).val()) {
-								var createBtn = $(this).siblings('.soldx-create-cat-btn');
-								var name = createBtn.data('wc-name');
-								if (name && !createBtn.prop('disabled')) {
-									rows.push({
-										sel: $(this),
-										btn: createBtn,
-										name: String(name),
-										termId: String(createBtn.data('wc-term-id') || ''),
-										wcParent: String(createBtn.data('wc-parent') || '0')
-									});
-								}
-							}
-						});
-
-						if (rows.length === 0) {
-							alert('No unmapped categories to create.');
-							return;
-						}
-
-						if (!confirm('Create ' + rows.length + ' categor' + (rows.length > 1 ? 'ies' : 'y') + ' in Studio?')) {
-							return;
-						}
-
-						// Map: wc_term_id → studio_cat_id (for children created in same batch).
-						var createdMap = {};
-						var done = 0, failed = 0;
-
-						btn.prop('disabled', true).text('Processing…');
-
-						// Sort by depth so parents are always created before children.
-						var parentMap = {};
-						$('.soldx-create-cat-btn').each(function() {
-							var tid = String($(this).data('wc-term-id') || '');
-							var pid = String($(this).data('wc-parent') || '0');
-							parentMap[tid] = pid;
-						});
-						function getDepth(termId) {
-							var d = 0, cur = termId, g = 0;
-							while (parentMap[cur] && parentMap[cur] !== '0' && g < 20) { d++; cur = parentMap[cur]; g++; }
-							return d;
-						}
-						rows.sort(function(a, b) { return getDepth(a.termId) - getDepth(b.termId); });
-
-						// Process sequentially to guarantee parents exist first.
-						function processNext(index) {
-							if (index >= rows.length) {
-								btn.prop('disabled', false).text('Create All Unmapped in Studio');
-								if (failed > 0) {
-									alert('Done: ' + done + ' created, ' + failed + ' failed. Check console (F12) for details.');
-								}
-								return;
-							}
-
-							var row = rows[index];
-							row.btn.prop('disabled', true).text('Creating…');
-
-							// Resolve parent: check createdMap first, then sibling select.
-							var idParent = '';
-							if (row.wcParent && row.wcParent !== '0') {
-								if (createdMap[row.wcParent]) {
-									idParent = createdMap[row.wcParent];
-								} else {
-									var parentBtn = $('.soldx-create-cat-btn[data-wc-term-id="' + row.wcParent + '"]');
-									var parentSel = parentBtn.siblings('.soldx-cat-select');
-									idParent = parentSel.val() || '';
-								}
-							}
-
-							createCategory(row.name, idParent, row.termId).then(function(cat) {
-								addCategoryToAllSelects(cat);
-								row.sel.val(cat.id).trigger("change");
-								createdMap[row.termId] = cat.id;
-								row.btn.removeClass('button-secondary').addClass('button-primary').text('✓');
-								done++;
-							}).catch(function(err) {
-								row.btn.prop('disabled', false).text('+ Studio');
-								failed++;
-								console.error('Failed to create "' + row.name + '":', err.message);
-							}).always(function() {
-								processNext(index + 1);
-							});
-						}
-
-						processNext(0);
-					});
-				})(jQuery);
-				</script>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -586,7 +385,7 @@ class Soldx_Admin_Categories {
 		check_ajax_referer( 'soldx_create_category', 'nonce' );
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'soldx-woocommerce' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'soldx-for-woocommerce' ) ), 403 );
 		}
 
 		$designation = isset( $_POST['designation'] ) ? sanitize_text_field( wp_unslash( $_POST['designation'] ) ) : '';
@@ -594,7 +393,7 @@ class Soldx_Admin_Categories {
 		$wc_term_id  = isset( $_POST['wcTermId'] ) ? absint( $_POST['wcTermId'] ) : 0;
 
 		if ( '' === $designation ) {
-			wp_send_json_error( array( 'message' => __( 'Designation is required.', 'soldx-woocommerce' ) ), 422 );
+			wp_send_json_error( array( 'message' => __( 'Designation is required.', 'soldx-for-woocommerce' ) ), 422 );
 		}
 
 		// Try to upload the WC category image (if it has one).

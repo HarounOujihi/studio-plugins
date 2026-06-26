@@ -1,16 +1,16 @@
 <?php
 /**
  * Plugin Name:       Soldx for WooCommerce
- * Plugin URI:        https://soldx.tn
  * Description:       Push WooCommerce products into Soldx Studio. Manual selection, per-article units/deposit, no auto-sync.
  * Version:           0.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
+ * Requires Plugins:  woocommerce
  * Author:            Soldx
  * Author URI:        https://soldx.tn
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       soldx-woocommerce
+ * Text Domain:       soldx-for-woocommerce
  * Domain Path:       /languages
  *
  * WC requires at least: 7.8
@@ -40,7 +40,7 @@ add_action( 'plugins_loaded', function () {
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		add_action( 'admin_notices', function () {
 			echo '<div class="notice notice-error"><p>';
-			esc_html_e( 'Soldx for WooCommerce requires the WooCommerce plugin to be active.', 'soldx-woocommerce' );
+			esc_html_e( 'Soldx for WooCommerce requires the WooCommerce plugin to be active.', 'soldx-for-woocommerce' );
 			echo '</p></div>';
 		} );
 		return;

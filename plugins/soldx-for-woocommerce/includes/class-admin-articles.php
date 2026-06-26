@@ -38,8 +38,8 @@ class Soldx_Admin_Articles {
 	public function register_menu() {
 		add_submenu_page(
 			'woocommerce',
-			__( 'Soldx Articles', 'soldx-woocommerce' ),
-			__( 'Soldx Articles', 'soldx-woocommerce' ),
+			__( 'Soldx Articles', 'soldx-for-woocommerce' ),
+			__( 'Soldx Articles', 'soldx-for-woocommerce' ),
 			'manage_woocommerce',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -56,6 +56,17 @@ class Soldx_Admin_Articles {
 			array(),
 			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin.css' )
 		);
+		wp_enqueue_script(
+			'soldx-admin-articles',
+			SOLDX_PLUGIN_URL . 'admin/assets/admin-articles.js',
+			array(),
+			filemtime( SOLDX_PLUGIN_DIR . 'admin/assets/admin-articles.js' ),
+			true
+		);
+		wp_localize_script( 'soldx-admin-articles', 'soldxArticles', array(
+			'noSelection' => __( 'Please select at least one product.', 'soldx-for-woocommerce' ),
+			'pushing'     => __( 'Pushing…', 'soldx-for-woocommerce' ),
+		) );
 	}
 
 	/**
@@ -66,10 +77,10 @@ class Soldx_Admin_Articles {
 			return;
 		}
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 		if ( ! soldx_verify_nonce( 'soldx_sync' ) ) {
-			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Nonce expired. Please go back and try again.', 'soldx-for-woocommerce' ) );
 		}
 
 		$ids = isset( $_POST['product_ids'] ) && is_array( $_POST['product_ids'] )
@@ -77,7 +88,7 @@ class Soldx_Admin_Articles {
 			: array();
 
 		if ( empty( $ids ) ) {
-			soldx_flash_notice_set( __( 'No products selected.', 'soldx-woocommerce' ), 'warning' );
+			soldx_flash_notice_set( __( 'No products selected.', 'soldx-for-woocommerce' ), 'warning' );
 			wp_safe_redirect( $this->redirect_back() );
 			exit;
 		}
@@ -99,7 +110,7 @@ class Soldx_Admin_Articles {
 			// saleUnitId is mandatory (D8).
 			if ( empty( $ov['saleUnitId'] ) ) {
 				$skipped++;
-				$errors[] = sprintf( '#%d: %s', $pid, __( 'missing sale unit', 'soldx-woocommerce' ) );
+				$errors[] = sprintf( '#%d: %s', $pid, __( 'missing sale unit', 'soldx-for-woocommerce' ) );
 				continue;
 			}
 
@@ -109,32 +120,32 @@ class Soldx_Admin_Articles {
 				$ok++;
 			} else {
 				$failed++;
-				$msg = isset( $result['error'] ) ? $result['error'] : __( 'Unknown error', 'soldx-woocommerce' );
+				$msg = isset( $result['error'] ) ? $result['error'] : __( 'Unknown error', 'soldx-for-woocommerce' );
 				$errors[] = sprintf( '#%d: %s', $pid, $msg );
 			}
 		}
 
 		$summary = sprintf(
 			/* translators: 1: synced count */
-			_n( 'Synced %1$d product to Studio.', 'Synced %1$d products to Studio.', $ok, 'soldx-woocommerce' ),
+			_n( 'Synced %1$d product to Studio.', 'Synced %1$d products to Studio.', $ok, 'soldx-for-woocommerce' ),
 			$ok
 		);
 		if ( $failed > 0 ) {
 			$summary .= ' ' . sprintf(
 				/* translators: %d: failed count */
-				_n( '%d failed.', '%d failed.', $failed, 'soldx-woocommerce' ),
+				_n( '%d failed.', '%d failed.', $failed, 'soldx-for-woocommerce' ),
 				$failed
 			);
 		}
 		if ( $skipped > 0 ) {
 			$summary .= ' ' . sprintf(
 				/* translators: %d: skipped count */
-				_n( '%d skipped.', '%d skipped.', $skipped, 'soldx-woocommerce' ),
+				_n( '%d skipped.', '%d skipped.', $skipped, 'soldx-for-woocommerce' ),
 				$skipped
 			);
 		}
 		if ( ! empty( $errors ) ) {
-			$summary .= '<br><details><summary>' . esc_html__( 'Show errors', 'soldx-woocommerce' ) . '</summary><ul style="margin-top:6px">';
+			$summary .= '<br><details><summary>' . esc_html__( 'Show errors', 'soldx-for-woocommerce' ) . '</summary><ul style="margin-top:6px">';
 			foreach ( array_slice( $errors, 0, 20 ) as $err ) {
 				$summary .= '<li><code>' . esc_html( $err ) . '</code></li>';
 			}
@@ -245,14 +256,14 @@ class Soldx_Admin_Articles {
 	 */
 	public function render_page() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-woocommerce' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'soldx-for-woocommerce' ) );
 		}
 
 		if ( ! Soldx_Auth::is_configured() ) {
 			echo '<div class="wrap"><div class="notice notice-warning"><p>';
 			printf(
 				/* translators: %s: settings URL */
-				wp_kses_post( __( 'Soldx is not configured yet. <a href="%s">Configure the plugin</a> first.', 'soldx-woocommerce' ) ),
+				wp_kses_post( __( 'Soldx is not configured yet. <a href="%s">Configure the plugin</a> first.', 'soldx-for-woocommerce' ) ),
 				esc_url( soldx_admin_url( Soldx_Admin_Settings::PAGE_SLUG ) )
 			);
 			echo '</p></div></div>';
@@ -273,15 +284,15 @@ class Soldx_Admin_Articles {
 		$options = $this->get_establishment_options();
 		if ( false === $options ) {
 			echo '<div class="wrap soldx-wrap">';
-			echo '<h1 class="soldx-title">' . esc_html__( 'Soldx Articles', 'soldx-woocommerce' ) . '</h1>';
+			echo '<h1 class="soldx-title">' . esc_html__( 'Soldx Articles', 'soldx-for-woocommerce' ) . '</h1>';
 			soldx_admin_notice(
 				__(
 					'Could not load establishment options from Studio. Check your connection in Settings, then retry.',
-					'soldx-woocommerce'
+					'soldx-for-woocommerce'
 				),
 				'error'
 			);
-			echo '<p><a class="button" href="' . esc_url( soldx_admin_url( Soldx_Admin_Settings::PAGE_SLUG ) ) . '">' . esc_html__( 'Open Settings', 'soldx-woocommerce' ) . '</a></p>';
+			echo '<p><a class="button" href="' . esc_url( soldx_admin_url( Soldx_Admin_Settings::PAGE_SLUG ) ) . '">' . esc_html__( 'Open Settings', 'soldx-for-woocommerce' ) . '</a></p>';
 			echo '</div>';
 			return;
 		}
@@ -353,31 +364,31 @@ class Soldx_Admin_Articles {
 		$base_url = soldx_admin_url( self::PAGE_SLUG );
 		?>
 		<div class="wrap soldx-wrap soldx-wrap--fluid">
-			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Articles', 'soldx-woocommerce' ); ?>
-				<a class="page-title-action" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Refresh', 'soldx-woocommerce' ); ?></a>
+			<h1 class="soldx-title"><?php esc_html_e( 'Soldx Articles', 'soldx-for-woocommerce' ); ?>
+				<a class="page-title-action" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Refresh', 'soldx-for-woocommerce' ); ?></a>
 			</h1>
-			<p class="soldx-subtitle"><?php esc_html_e( 'Select WooCommerce products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.', 'soldx-woocommerce' ); ?>
-				<a class="page-title-action" href="<?php echo esc_url( $cats_url ); ?>"><?php esc_html_e( 'Category Mapping', 'soldx-woocommerce' ); ?></a>
+			<p class="soldx-subtitle"><?php esc_html_e( 'Select WooCommerce products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.', 'soldx-for-woocommerce' ); ?>
+				<a class="page-title-action" href="<?php echo esc_url( $cats_url ); ?>"><?php esc_html_e( 'Category Mapping', 'soldx-for-woocommerce' ); ?></a>
 			</p>
 			<p class="soldx-safety-inline">
 				<span class="dashicons dashicons-shield-alt"></span>
-				<?php esc_html_e( 'Read-only: nothing is modified in your WooCommerce store. Products are pushed to Studio only when you click the button below — no automation.', 'soldx-woocommerce' ); ?>
+				<?php esc_html_e( 'Read-only: nothing is modified in your WooCommerce store. Products are pushed to Studio only when you click the button below — no automation.', 'soldx-for-woocommerce' ); ?>
 			</p>
 
 			<form method="get" class="soldx-search-form">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>" />
-				<label class="screen-reader-text" for="soldx-q"><?php esc_html_e( 'Search products', 'soldx-woocommerce' ); ?></label>
+				<label class="screen-reader-text" for="soldx-q"><?php esc_html_e( 'Search products', 'soldx-for-woocommerce' ); ?></label>
 				<input
 					type="search"
 					id="soldx-q"
 					name="q"
 					value="<?php echo esc_attr( $search ); ?>"
-					placeholder="<?php esc_attr_e( 'Search by name or SKU…', 'soldx-woocommerce' ); ?>"
+					placeholder="<?php esc_attr_e( 'Search by name or SKU…', 'soldx-for-woocommerce' ); ?>"
 					class="regular-text"
 				/>
-				<button type="submit" class="button"><?php esc_html_e( 'Search', 'soldx-woocommerce' ); ?></button>
+				<button type="submit" class="button"><?php esc_html_e( 'Search', 'soldx-for-woocommerce' ); ?></button>
 				<?php if ( '' !== $search ) : ?>
-					<a class="button button-link" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Clear', 'soldx-woocommerce' ); ?></a>
+					<a class="button button-link" href="<?php echo esc_url( $base_url ); ?>"><?php esc_html_e( 'Clear', 'soldx-for-woocommerce' ); ?></a>
 				<?php endif; ?>
 			</form>
 
@@ -390,7 +401,7 @@ class Soldx_Admin_Articles {
 				<div class="tablenav top soldx-tablenav">
 					<div class="alignleft actions bulkactions">
 						<button type="submit" class="button button-primary soldx-bulk-sync" id="soldx-bulk-sync">
-							<?php esc_html_e( 'Push selected to Studio', 'soldx-woocommerce' ); ?>
+							<?php esc_html_e( 'Push selected to Studio', 'soldx-for-woocommerce' ); ?>
 						</button>
 					</div>
 					<div class="tablenav-pages">
@@ -402,24 +413,24 @@ class Soldx_Admin_Articles {
 					<thead>
 						<tr>
 							<th class="soldx-check"><input type="checkbox" id="soldx-select-all" /></th>
-							<th class="soldx-thumb"><?php esc_html_e( 'Image', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-name"><?php esc_html_e( 'Product', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-sku"><?php esc_html_e( 'SKU', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-price"><?php esc_html_e( 'Reg. Price', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-price"><?php esc_html_e( 'Sale Price', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-cats"><?php esc_html_e( 'Categories', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-tags"><?php esc_html_e( 'Tags', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-unit"><?php esc_html_e( 'Sale unit', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-unit"><?php esc_html_e( 'Purchase unit', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-deposit"><?php esc_html_e( 'Deposit', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-publish"><?php esc_html_e( 'Publish', 'soldx-woocommerce' ); ?></th>
-							<th class="soldx-status"><?php esc_html_e( 'Status', 'soldx-woocommerce' ); ?></th>
+							<th class="soldx-thumb"><?php esc_html_e( 'Image', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-name"><?php esc_html_e( 'Product', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-sku"><?php esc_html_e( 'SKU', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-price"><?php esc_html_e( 'Reg. Price', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-price"><?php esc_html_e( 'Sale Price', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-cats"><?php esc_html_e( 'Categories', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-tags"><?php esc_html_e( 'Tags', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-unit"><?php esc_html_e( 'Sale unit', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-unit"><?php esc_html_e( 'Purchase unit', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-deposit"><?php esc_html_e( 'Deposit', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-publish"><?php esc_html_e( 'Publish', 'soldx-for-woocommerce' ); ?></th>
+							<th class="soldx-status"><?php esc_html_e( 'Status', 'soldx-for-woocommerce' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $items ) ) : ?>
 							<tr>
-								<td colspan="13"><?php esc_html_e( 'No products found.', 'soldx-woocommerce' ); ?></td>
+								<td colspan="13"><?php esc_html_e( 'No products found.', 'soldx-for-woocommerce' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $items as $p ) : ?>
@@ -474,7 +485,7 @@ class Soldx_Admin_Articles {
 								<td class="soldx-cats"><?php
 									$resolved = Soldx_Admin_Categories::resolve( $p->get_category_ids() );
 									if ( empty( $resolved ) ) {
-										echo '<span class="soldx-muted">' . esc_html__( '—', 'soldx-woocommerce' ) . '</span>';
+										echo '<span class="soldx-muted">' . esc_html__( '—', 'soldx-for-woocommerce' ) . '</span>';
 									} else {
 										foreach ( $resolved as $cid ) {
 											$label = isset( $studio_cats[ $cid ] ) ? $studio_cats[ $cid ] : $cid;
@@ -516,7 +527,7 @@ class Soldx_Admin_Articles {
 											checked
 										/>
 									</td>
-									<td class="soldx-status"><?php echo wp_kses_post( $map ? $this->status_badge( $map ) : '<span class="soldx-badge soldx-badge--new">' . esc_html__( 'New', 'soldx-woocommerce' ) . '</span>' ); ?></td>
+									<td class="soldx-status"><?php echo wp_kses_post( $map ? $this->status_badge( $map ) : '<span class="soldx-badge soldx-badge--new">' . esc_html__( 'New', 'soldx-for-woocommerce' ) . '</span>' ); ?></td>
 								</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -530,39 +541,6 @@ class Soldx_Admin_Articles {
 				</div>
 			</form>
 		</div>
-
-		<script>
-		(function() {
-			var selectAll = document.getElementById('soldx-select-all');
-			if (!selectAll) { return; }
-			selectAll.addEventListener('change', function() {
-				var boxes = document.querySelectorAll('.soldx-row-check');
-				for (var i = 0; i < boxes.length; i++) {
-					boxes[i].checked = selectAll.checked;
-				}
-			});
-			var form = document.getElementById('soldx-sync-form');
-			var btn = document.getElementById('soldx-bulk-sync');
-			if (form && btn) {
-				form.addEventListener('submit', function(e) {
-					var checked = form.querySelectorAll('.soldx-row-check:checked');
-					if (checked.length === 0) {
-						e.preventDefault();
-						alert(<?php echo wp_json_encode( __( 'Please select at least one product.', 'soldx-woocommerce' ) ); ?>);
-					} else {
-						btn.setAttribute('disabled', 'disabled');
-						btn.innerText = <?php echo wp_json_encode( __( 'Pushing…', 'soldx-woocommerce' ) ); ?>;
-					}
-				});
-			}
-		})();
-		// Toggle pill visual state on checkbox change.
-		document.querySelectorAll('.soldx-pill input[type="checkbox"]').forEach(function(cb) {
-			cb.addEventListener('change', function() {
-				this.closest('.soldx-pill').classList.toggle('soldx-pill--on', this.checked);
-			});
-		});
-		</script>
 		<?php
 	}
 
@@ -586,7 +564,7 @@ class Soldx_Admin_Articles {
 		$out  = '<select name="' . esc_attr( $name ) . '" class="soldx-select"';
 		$out .= $required ? ' required' : '';
 		$out .= '>';
-		$out .= '<option value="">' . esc_html__( '— Select —', 'soldx-woocommerce' ) . '</option>';
+		$out .= '<option value="">' . esc_html__( '— Select —', 'soldx-for-woocommerce' ) . '</option>';
 		if ( is_array( $options ) ) {
 			foreach ( $options as $opt ) {
 				$id = isset( $opt['id'] ) ? $opt['id'] : '';
@@ -629,19 +607,19 @@ class Soldx_Admin_Articles {
 		$status = isset( $map->sync_status ) ? $map->sync_status : 'PENDING';
 		switch ( $status ) {
 			case 'SYNCED':
-				$label = __( 'Synced', 'soldx-woocommerce' );
+				$label = __( 'Synced', 'soldx-for-woocommerce' );
 				$cls   = 'soldx-badge--ok';
 				break;
 			case 'ERROR':
-				$label = __( 'Error', 'soldx-woocommerce' );
+				$label = __( 'Error', 'soldx-for-woocommerce' );
 				$cls   = 'soldx-badge--err';
 				break;
 			case 'DELETED_REMOTE':
-				$label = __( 'Removed', 'soldx-woocommerce' );
+				$label = __( 'Removed', 'soldx-for-woocommerce' );
 				$cls   = 'soldx-badge--muted';
 				break;
 			default:
-				$label = __( 'Pending', 'soldx-woocommerce' );
+				$label = __( 'Pending', 'soldx-for-woocommerce' );
 				$cls   = 'soldx-badge--warn';
 				break;
 		}
@@ -695,12 +673,16 @@ class Soldx_Admin_Articles {
 		if ( $pages <= 1 ) {
 			return '<span class="displaying-num">' . sprintf(
 				/* translators: %d: total items */
-				_n( '%d item', '%d items', $total, 'soldx-woocommerce' ),
+				_n( '%d item', '%d items', $total, 'soldx-for-woocommerce' ),
 				$total
 			) . '</span>';
 		}
 
-		$out  = '<span class="displaying-num">' . sprintf( _n( '%d item', '%d items', $total, 'soldx-woocommerce' ), $total ) . '</span> ';
+		$out  = '<span class="displaying-num">' . sprintf(
+			/* translators: %d: total items */
+			_n( '%d item', '%d items', $total, 'soldx-for-woocommerce' ),
+			$total
+		) . '</span> ';
 		$args = array_filter( array( 'q' => $search ) );
 
 		$prev_url = add_query_arg( array_merge( $args, array( 'paged' => $page - 1 ) ), $base_url );
@@ -714,7 +696,7 @@ class Soldx_Admin_Articles {
 		}
 		$out .= '<span class="tablenav-paging-text">' . sprintf(
 			/* translators: 1: current page, 2: total pages */
-			esc_html__( '%1$d of %2$d', 'soldx-woocommerce' ),
+			esc_html__( '%1$d of %2$d', 'soldx-for-woocommerce' ),
 			$page,
 			$pages
 		) . '</span> ';

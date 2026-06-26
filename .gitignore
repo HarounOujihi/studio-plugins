@@ -1,0 +1,20 @@
+# Build artifacts
+*.zip
+
+# Docker demo data (never commit container volumes)
+ps-demo/db-data/
+ps-demo/ps-data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log

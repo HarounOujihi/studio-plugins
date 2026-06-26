@@ -1,0 +1,382 @@
+/**
+ * Soldx for PrestaShop — Admin styles.
+ */
+
+/* Layout ---------------------------------------------------------- */
+
+.soldx-wrap {
+    max-width: 1400px;
+    margin: 20px auto;
+}
+
+.soldx-wrap--fluid {
+    max-width: 100%;
+}
+
+.soldx-title {
+    font-size: 23px;
+    font-weight: 400;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.soldx-title .btn {
+    font-size: 13px;
+}
+
+.soldx-subtitle {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+/* Safety banner --------------------------------------------------- */
+
+.soldx-safety {
+    display: flex;
+    gap: 15px;
+    background: #f7f9fc;
+    border: 1px solid #dce2e8;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.soldx-safety-icon {
+    flex-shrink: 0;
+    width: 40px;
+    text-align: center;
+    padding-top: 2px;
+}
+
+.soldx-safety-body h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.soldx-safety-body ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #555;
+    font-size: 13px;
+}
+
+.soldx-safety-body li {
+    margin-bottom: 3px;
+}
+
+.soldx-safety-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff8e5;
+    border-left: 3px solid #f0ad4e;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+/* Connected card -------------------------------------------------- */
+
+.soldx-card {
+    background: #f0f9ff;
+    border: 1px solid #b8daff;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.soldx-card--connected {
+    background: #f0fdf4;
+    border-color: #9fd8a7;
+}
+
+.soldx-card-title {
+    margin: 0 0 5px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.soldx-card-meta {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.soldx-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.soldx-dot--ok {
+    background: #28a745;
+}
+
+/* Help section ---------------------------------------------------- */
+
+.soldx-help {
+    margin-top: 30px;
+    padding: 15px;
+    background: #f7f9fc;
+    border-radius: 4px;
+}
+
+.soldx-help h3 {
+    margin-top: 0;
+    font-size: 14px;
+}
+
+.soldx-help ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #555;
+    font-size: 13px;
+}
+
+/* Tables ---------------------------------------------------------- */
+
+.soldx-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.soldx-table th {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 2px solid #ddd;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.soldx-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.soldx-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+/* Checkboxes ----------------------------------------------------- */
+
+.soldx-check {
+    width: 30px;
+    text-align: center;
+}
+
+.soldx-thumb {
+    width: 56px;
+}
+
+.soldx-thumb-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+}
+
+.soldx-thumb-placeholder {
+    color: #ccc;
+    font-size: 18px;
+}
+
+.soldx-name {
+    min-width: 150px;
+}
+
+.soldx-muted {
+    color: #999;
+    font-size: 12px;
+}
+
+/* Badges --------------------------------------------------------- */
+
+.soldx-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 1px;
+}
+
+.soldx-badge--ok {
+    background: #d4edda;
+    color: #155724;
+}
+
+.soldx-badge--err {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.soldx-badge--warn {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.soldx-badge--new {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.soldx-badge--muted {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.soldx-badge--cat {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Tag pills ------------------------------------------------------ */
+
+.soldx-tag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 250px;
+}
+
+.soldx-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    background: #fff;
+}
+
+.soldx-pill:hover {
+    border-color: #999;
+}
+
+.soldx-pill--on {
+    background: #0071a1;
+    color: #fff;
+    border-color: #0071a1;
+}
+
+.soldx-pill input[type="checkbox"] {
+    display: none;
+}
+
+/* Selects -------------------------------------------------------- */
+
+.soldx-select {
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 13px;
+    max-width: 150px;
+}
+
+/* Search --------------------------------------------------------- */
+
+.soldx-search-form {
+    margin-bottom: 10px;
+}
+
+.soldx-search-wrap {
+    margin-bottom: 10px;
+}
+
+.soldx-search-count {
+    color: #666;
+    margin-left: 8px;
+    font-size: 13px;
+}
+
+/* Tablenav ------------------------------------------------------- */
+
+.soldx-tablenav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.tablenav-pages {
+    font-size: 13px;
+    color: #666;
+}
+
+.tablenav-paging-text {
+    margin: 0 8px;
+}
+
+.displaying-num {
+    margin-right: 10px;
+    color: #666;
+}
+
+/* Category cell -------------------------------------------------- */
+
+.soldx-cat-cell {
+    white-space: nowrap;
+}
+
+.soldx-cat-cell .btn {
+    margin-left: 5px;
+}
+
+/* Form ----------------------------------------------------------- */
+
+.soldx-form .form-group {
+    margin-bottom: 15px;
+}
+
+.soldx-actions {
+    margin-top: 15px;
+}
+
+/* Alerts --------------------------------------------------------- */
+
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-error,
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+
+.alert {
+    padding: 12px 15px;
+    border-radius: 4px;
+    border-left: 4px solid transparent;
+}
+
+.alert p {
+    margin: 0;
+}
+
+.alert details {
+    margin-top: 5px;
+}
+
+.alert code {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+/* Buttons -------------------------------------------------------- */
+
+.btn.disabled,
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}

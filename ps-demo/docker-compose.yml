@@ -1,0 +1,41 @@
+name: soldx-ps-demo
+
+services:
+  db:
+    image: mariadb:10.11
+    command: '--default-authentication-plugin=mysql_native_password'
+    volumes:
+      - /home/haroun/projects/sawi/soldx-plugins/ps-demo/db-data:/var/lib/mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=prestashop
+      - MYSQL_USER=prestashop
+      - MYSQL_PASSWORD=prestashop
+    expose:
+      - "3306"
+
+  prestashop:
+    image: prestashop/prestashop:8.2
+    volumes:
+      - /home/haroun/projects/sawi/soldx-plugins/ps-demo/ps-data:/var/www/html
+    ports:
+      - "8889:80"
+    restart: always
+    environment:
+      - DB_SERVER=db
+      - DB_NAME=prestashop
+      - DB_USER=prestashop
+      - DB_PASSWD=prestashop
+      - PS_INSTALL_AUTO=1
+      - PS_DEV_MODE=1
+      - PS_DOMAIN=localhost:8889
+      - PS_LANGUAGE=en
+      - PS_COUNTRY=FR
+      - PS_FOLDER_ADMIN=admin123
+      - ADMIN_MAIL=haroun@mahd.group
+      - ADMIN_PASSWD=soldx123
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
