@@ -103,6 +103,9 @@ class AdminSoldxArticlesController extends ModuleAdminController
         }
         unset($item);
 
+        // Enrich with discount info (specific prices).
+        $this->enrichWithDiscountInfo($items);
+
         // Build lookup of existing mappings.
         $mappings = [];
         if (!empty($items)) {
@@ -342,6 +345,83 @@ class AdminSoldxArticlesController extends ModuleAdminController
             $out[$pid][] = Tools::link_rewrite($row['name']);
         }
         return $out;
+    }
+
+    /**
+     * Batch-enrich product items with discount info from ps_specific_price.
+     * Computes: has_discount, sale_price, discount_percent per product.
+     * Uses the same logic as SoldxSyncEngine::getSpecificPrice().
+     */
+    private function enrichWithDiscountInfo(&$items)
+    {
+        if (empty($items)) {
+            return;
+        }
+        $ids = [];
+        foreach ($items as $p) {
+            $ids[] = (int) $p['id_product'];
+        }
+        $id_list = implode(',', $ids);
+        $id_shop = (int) Context::getContext()->shop->id;
+
+        $sql = 'SELECT sp.id_product, sp.reduction, sp.reduction_type, sp.price, sp.from, sp.to
+                FROM ' . _DB_PREFIX_ . 'specific_price sp
+                WHERE sp.id_product IN (' . $id_list . ')
+                  AND sp.id_product_attribute = 0
+                  AND sp.id_cart = 0
+                  AND sp.id_customer = 0
+                  AND (sp.id_shop = 0 OR sp.id_shop = ' . $id_shop . ')
+                  AND sp.id_country = 0
+                  AND sp.id_currency = 0
+                  AND sp.id_group = 0
+                  AND (sp.from = "0000-00-00 00:00:00" OR sp.from <= NOW())
+                  AND (sp.to = "0000-00-00 00:00:00" OR sp.to >= NOW())
+                ORDER BY sp.id_product, sp.id_specific_price ASC';
+        $rows = Db::getInstance()->executeS($sql);
+
+        // Index by product — first match wins (highest priority).
+        $by_product = [];
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $pid = (int) $row['id_product'];
+                if (!isset($by_product[$pid])) {
+                    $by_product[$pid] = $row;
+                }
+            }
+        }
+
+        foreach ($items as &$item) {
+            $pid = (int) $item['id_product'];
+            $item['has_discount'] = false;
+            $item['sale_price'] = null;
+            $item['discount_percent'] = 0.0;
+
+            if (!isset($by_product[$pid])) {
+                continue;
+            }
+
+            $sp = $by_product[$pid];
+            $base = (float) $item['price'];
+
+            // Compute effective price — same logic as SoldxSyncEngine.
+            $effective = $base;
+            if (!empty($sp['price']) && (float) $sp['price'] > 0 && (float) $sp['price'] < $base) {
+                $effective = (float) $sp['price'];
+            } elseif (!empty($sp['reduction']) && (float) $sp['reduction'] > 0) {
+                if ($sp['reduction_type'] === 'percentage') {
+                    $effective = $base * (1 - (float) $sp['reduction']);
+                } else {
+                    $effective = $base - (float) $sp['reduction'];
+                }
+            }
+
+            if ($effective < $base && $base > 0) {
+                $item['has_discount'] = true;
+                $item['sale_price'] = round($effective, 6);
+                $item['discount_percent'] = round((1 - $effective / $base) * 100, 1);
+            }
+        }
+        unset($item);
     }
 
     // ------------------------------------------------------------------

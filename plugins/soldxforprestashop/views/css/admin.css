@@ -192,6 +192,15 @@
     min-width: 150px;
 }
 
+.soldx-price {
+    white-space: nowrap;
+}
+
+.soldx-discount {
+    white-space: nowrap;
+    min-width: 70px;
+}
+
 .soldx-muted {
     color: #999;
     font-size: 12px;

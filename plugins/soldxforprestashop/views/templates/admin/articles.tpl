@@ -76,6 +76,7 @@
                     <th class="soldx-name">Product</th>
                     <th class="soldx-sku">Ref</th>
                     <th class="soldx-price">Price</th>
+                    <th class="soldx-discount">Discount</th>
                     <th class="soldx-cats">Categories</th>
                     <th class="soldx-tags">Tags</th>
                     <th class="soldx-unit">Sale unit</th>
@@ -88,7 +89,7 @@
             <tbody>
                 {if empty($items)}
                     <tr>
-                        <td colspan="12">No products found.</td>
+                        <td colspan="13">No products found.</td>
                     </tr>
                 {else}
                     {foreach from=$items item=p name=prodloop}
@@ -116,6 +117,14 @@
                         </td>
                         <td class="soldx-price">
                             {Tools::displayPrice($p.price)}
+                        </td>
+                        <td class="soldx-discount">
+                            {if $p.has_discount}
+                                <span class="soldx-badge soldx-badge--warn">-{$p.discount_percent|string_format:"%.0f"}%</span>
+                                <br><span class="soldx-muted">{Tools::displayPrice($p.sale_price)}</span>
+                            {else}
+                                <span class="soldx-muted">—</span>
+                            {/if}
                         </td>
                         <td class="soldx-cats">
                             {if empty($p.resolved_cats)}

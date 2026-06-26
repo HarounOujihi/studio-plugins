@@ -167,11 +167,14 @@ class SoldxSyncEngine
             $link_rewrite = (string) $product->link_rewrite;
         }
 
-        // Pricing — PS stores price tax-excl in ps_product.price.
-        $base_price = (float) $product->price;
-        // Specific price (sale price) — check if a specific price exists.
-        $specific_price = $this->getSpecificPrice($product->id);
-        $sale_price = $specific_price;
+        // Pricing — read base price directly from DB because $product->price
+        // may have the specific price already applied by PS's constructor.
+        $base_price = (float) Db::getInstance()->getValue(
+            'SELECT price FROM ' . _DB_PREFIX_ . 'product WHERE id_product = ' . (int) $product->id
+        );
+        // Specific price (sale price + dates) via direct DB query.
+        $sp_info = $this->getSpecificPriceInfo($product->id, $base_price);
+        $sale_price = $sp_info['sale_price'];
 
         // Tax rate hint.
         $tax_rate = $this->estimateTaxRate($product->id);
@@ -186,11 +189,8 @@ class SoldxSyncEngine
         $discount_end = null;
         if ($sale_price > 0 && $sale_price < $base_price && $base_price > 0) {
             $discount_percent = round((1.0 - $sale_price / $base_price) * 100, 4);
-            $sp = $this->getSpecificPriceDates($product->id);
-            if ($sp) {
-                $discount_start = $sp['from'];
-                $discount_end = $sp['to'];
-            }
+            $discount_start = $sp_info['from'];
+            $discount_end = $sp_info['to'];
         }
 
         // Categories: resolve PS category IDs → Studio category IDs.
@@ -242,63 +242,62 @@ class SoldxSyncEngine
         ];
 
         $dto['hash'] = $this->payloadHash($dto);
+
         return $dto;
     }
 
     /**
-     * Get the specific (sale) price for a product, if any.
+     * Get the specific price info for a product via direct DB query.
+     *
+     * SpecificPrice::getSpecificPrice() depends on shop/customer/cart context
+     * that is not properly initialized during the admin sync flow, so we query
+     * ps_specific_price directly.
      *
      * @param int $id_product
-     * @return float 0 if no specific price.
+     * @param float $base_price  The product's base price from ps_product.
+     * @return array { sale_price: float, from: string|null, to: string|null }
+     *                sale_price is 0.0 when no active specific price exists.
      */
-    private function getSpecificPrice($id_product)
+    private function getSpecificPriceInfo($id_product, $base_price)
     {
-        $specific = SpecificPrice::getSpecificPrice(
-            (int) $id_product,
-            (int) Shop::getContextShopID(),
-            null, // id_currency
-            null, // id_country
-            null, // id_group
-            1,    // quantity
-            null, // id_product_attribute
-            null, // id_customer
-            null, // id_cart
-            0     // real_quantity
-        );
+        $id_shop = (int) Context::getContext()->shop->id;
 
-        if ($specific && isset($specific['price']) && $specific['price'] >= 0) {
-            $base = (float) Db::getInstance()->getValue(
-                'SELECT price FROM ' . _DB_PREFIX_ . 'product WHERE id_product = ' . (int) $id_product
-            );
-            if ((float) $specific['price'] > 0 && (float) $specific['price'] < $base) {
-                return (float) $specific['price'];
-            }
-            if (!empty($specific['reduction']) && $specific['reduction'] > 0) {
-                if ($specific['reduction_type'] === 'percentage') {
-                    return $base * (1 - (float) $specific['reduction']);
-                }
-                return $base - (float) $specific['reduction'];
-            }
-        }
-        return 0.0;
-    }
+        $sql = 'SELECT sp.reduction, sp.reduction_type, sp.price, sp.from, sp.to
+                FROM ' . _DB_PREFIX_ . 'specific_price sp
+                WHERE sp.id_product = ' . (int) $id_product . '
+                  AND sp.id_product_attribute = 0
+                  AND sp.id_cart = 0
+                  AND sp.id_customer = 0
+                  AND (sp.id_shop = 0 OR sp.id_shop = ' . $id_shop . ')
+                  AND sp.id_country = 0
+                  AND sp.id_currency = 0
+                  AND sp.id_group = 0
+                  AND (sp.from = "0000-00-00 00:00:00" OR sp.from <= NOW())
+                  AND (sp.to = "0000-00-00 00:00:00" OR sp.to >= NOW())
+                ORDER BY sp.id_specific_price ASC';
 
-    /**
-     * Get the from/to dates of the specific price.
-     *
-     * @param int $id_product
-     * @return array|null { from, to } ISO strings or null.
-     */
-    private function getSpecificPriceDates($id_product)
-    {
-        $sql = 'SELECT `from`, `to` FROM ' . _DB_PREFIX_ . 'specific_price
-                WHERE id_product = ' . (int) $id_product . '
-                  AND (`from` != "0000-00-00 00:00:00" OR `to` != "0000-00-00 00:00:00")
-                ORDER BY id_specific_price DESC';
         $row = Db::getInstance()->getRow($sql);
+
         if (!$row) {
-            return null;
+            return ['sale_price' => 0.0, 'from' => null, 'to' => null];
         }
+
+        // Compute effective sale price — same logic as enrichWithDiscountInfo().
+        $effective = $base_price;
+        if (!empty($row['price']) && (float) $row['price'] > 0 && (float) $row['price'] < $base_price) {
+            $effective = (float) $row['price'];
+        } elseif (!empty($row['reduction']) && (float) $row['reduction'] > 0) {
+            if ($row['reduction_type'] === 'percentage') {
+                $effective = $base_price * (1 - (float) $row['reduction']);
+            } else {
+                $effective = $base_price - (float) $row['reduction'];
+            }
+        }
+
+        if ($effective >= $base_price) {
+            return ['sale_price' => 0.0, 'from' => null, 'to' => null];
+        }
+
         $from = null;
         $to = null;
         if (!empty($row['from']) && $row['from'] !== '0000-00-00 00:00:00') {
@@ -307,7 +306,8 @@ class SoldxSyncEngine
         if (!empty($row['to']) && $row['to'] !== '0000-00-00 00:00:00') {
             $to = date('c', strtotime($row['to']));
         }
-        return ['from' => $from, 'to' => $to];
+
+        return ['sale_price' => (float) $effective, 'from' => $from, 'to' => $to];
     }
 
     /**
