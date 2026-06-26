@@ -1,5 +1,9 @@
 # Build artifacts
 *.zip
+# Exception: distribution ZIPs for public release
+!soldxforprestashop-*.zip
+!soldx-for-woocommerce-*.zip
+!soldx-woocommerce-*.zip
 
 # Docker demo data (never commit container volumes)
 ps-demo/db-data/
