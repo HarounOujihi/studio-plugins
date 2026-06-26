@@ -108,8 +108,12 @@
                         btn.disabled = false;
                     }
                 })
-                .catch(function () {
-                    alert('Network error creating category.');
+                .catch(function (err) {
+                    var msg = 'Network error creating category.';
+                    if (err && err.message) {
+                        msg += '\n' + err.message;
+                    }
+                    alert(msg);
                     btn.textContent = '+ Studio';
                     btn.disabled = false;
                 });
@@ -196,7 +200,7 @@
                         }
                         processNext(idx + 1);
                     })
-                    .catch(function () {
+                    .catch(function (err) {
                         done++;
                         failed++;
                         createBtn.textContent = 'Failed';

@@ -333,6 +333,39 @@
     margin-left: 5px;
 }
 
+/* Category hierarchy --------------------------------------------- */
+
+.soldx-cat-indent {
+    display: inline-block;
+}
+
+.soldx-cat-arrow {
+    color: #aaa;
+    margin-right: 4px;
+    font-size: 14px;
+}
+
+.soldx-cat-child td:first-child {
+    background: #fafbfc;
+}
+
+.soldx-cat-root td:first-child {
+    border-top: 2px solid #e0e0e0;
+}
+
+.soldx-parent-hint {
+    margin-left: 6px;
+    font-style: italic;
+}
+
+/* Search highlight ----------------------------------------------- */
+
+.soldx-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Form ----------------------------------------------------------- */
 
 .soldx-form .form-group {

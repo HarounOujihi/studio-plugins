@@ -168,7 +168,8 @@ class AdminSoldxArticlesController extends ModuleAdminController
         if (Tools::isSubmit('soldx_action') && 'sync_selected' === Tools::getValue('soldx_action')) {
             return $this->handleSync();
         }
-        return true;
+        // Let the parent handle AJAX dispatch (ajaxProcess*) and other actions.
+        return parent::postProcess();
     }
 
     private function handleSync()

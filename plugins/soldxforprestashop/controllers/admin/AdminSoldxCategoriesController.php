@@ -73,7 +73,8 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         if (Tools::isSubmit('soldx_action') && 'save_categories' === Tools::getValue('soldx_action')) {
             return $this->handleSave();
         }
-        return true;
+        // Let the parent handle AJAX dispatch (ajaxProcess*) and other actions.
+        return parent::postProcess();
     }
 
     private function handleSave()
@@ -126,7 +127,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     {
         $designation = pSQL(Tools::getValue('designation'));
         $id_parent = pSQL(Tools::getValue('idParent'));
-        $wc_term_id = (int) Tools::getValue('wcTermId'); // PS category id for image lookup
+        $ps_cat_id = (int) Tools::getValue('wcTermId'); // PS category id
 
         if ('' === $designation) {
             $this->ajaxDie(json_encode([
@@ -135,13 +136,46 @@ class AdminSoldxCategoriesController extends ModuleAdminController
             ]));
         }
 
+        // Auto-resolve parent: if no explicit Studio parent was selected,
+        // check whether this PS category's parent is already mapped to a
+        // Studio category and use that as the parent.
+        if ('' === $id_parent && $ps_cat_id) {
+            $ps_parent_id = (int) Db::getInstance()->getValue(
+                'SELECT id_parent FROM ' . _DB_PREFIX_ . 'category WHERE id_category = ' . $ps_cat_id
+            );
+            if ($ps_parent_id > 1) { // 1 = root, skip
+                $mapping = self::getMapping();
+                $ps_parent_key = (string) $ps_parent_id;
+                if (isset($mapping[$ps_parent_key]) && '' !== $mapping[$ps_parent_key]) {
+                    $id_parent = $mapping[$ps_parent_key];
+                }
+            }
+        }
+
+        // Validate that the resolved parent actually exists in Studio.
+        // Stale mappings (e.g. after Studio categories were deleted) would
+        // cause a foreign-key constraint violation on create.
+        if ('' !== $id_parent) {
+            $studio_cat_ids = $this->getStudioCategoryIds();
+            if (!in_array($id_parent, $studio_cat_ids)) {
+                $id_parent = ''; // Parent no longer exists, create as root.
+            }
+        }
+
         $image_key = '';
-        if ($wc_term_id) {
-            $image_key = $this->uploadCategoryImage($wc_term_id);
+        if ($ps_cat_id) {
+            $image_key = $this->uploadCategoryImage($ps_cat_id);
         }
 
         try {
             $result = Soldxforprestashop::getApiClient()->createCategory($designation, $id_parent, $image_key);
+
+            // Immediately update the local mapping so that subsequent
+            // subcategory imports can resolve the correct parent.
+            if ($ps_cat_id && !empty($result['id'])) {
+                $this->updateMappingEntry($ps_cat_id, $result['id']);
+            }
+
             $this->bustOptionsCache();
             $this->ajaxDie(json_encode([
                 'success' => true,
@@ -161,12 +195,18 @@ class AdminSoldxCategoriesController extends ModuleAdminController
 
     private function getPsCategories($id_lang)
     {
-        $sql = 'SELECT c.id_category, c.id_parent, c.level_depth, cl.name, cl.link_rewrite
+        // Order by nleft to get proper nested-set hierarchy.
+        // Parent categories always appear before their children.
+        $sql = 'SELECT c.id_category, c.id_parent, c.level_depth, c.nleft, c.nright,
+                       cl.name, cl.link_rewrite,
+                       clp.name AS parent_name
                 FROM ' . _DB_PREFIX_ . 'category c
                 INNER JOIN ' . _DB_PREFIX_ . 'category_lang cl
                     ON (c.id_category = cl.id_category AND cl.id_lang = ' . (int) $id_lang . ')
+                LEFT JOIN ' . _DB_PREFIX_ . 'category_lang clp
+                    ON (c.id_parent = clp.id_category AND clp.id_lang = ' . (int) $id_lang . ')
                 WHERE c.active = 1 AND c.id_category > 1
-                ORDER BY cl.name ASC';
+                ORDER BY c.nleft';
         return Db::getInstance()->executeS($sql);
     }
 
@@ -200,15 +240,50 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     }
 
     /**
+     * Return the list of valid Studio category IDs from cached options.
+     * Used to validate that a mapped parent still exists before passing
+     * it to the Studio API (avoids FK constraint violations).
+     */
+    private function getStudioCategoryIds()
+    {
+        $options = $this->getEstablishmentOptions();
+        if (!is_array($options) || !isset($options['categories'])) {
+            return [];
+        }
+        $ids = [];
+        foreach ($options['categories'] as $cat) {
+            if (!empty($cat['id'])) {
+                $ids[] = $cat['id'];
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * Update a single PS→Studio category mapping entry in-place.
+     * Called right after a category is created in Studio so that
+     * subsequent child imports can resolve the correct parent.
+     */
+    private function updateMappingEntry($ps_cat_id, $studio_cat_id)
+    {
+        $ps_cat_id = (int) $ps_cat_id;
+        if (!$ps_cat_id || empty($studio_cat_id)) {
+            return;
+        }
+        $mapping = self::getMapping();
+        $mapping[$ps_cat_id] = $studio_cat_id;
+        Configuration::updateValue('SOLDX_CATEGORY_MAP', json_encode($mapping));
+    }
+
+    /**
      * Upload a PS category's image to Studio.
-     * PrestaShop stores category images in img/c/{split_id}/{id}.jpg
+     * PrestaShop stores category images flat in img/c/{id}.jpg
+     * (NOT in split subdirectories like product images).
      */
     private function uploadCategoryImage($id_category)
     {
         $id_category = (int) $id_category;
-        // Build path: img/c/1/2/3/123.jpg
-        $chars = str_split((string) $id_category);
-        $path = _PS_CAT_IMG_DIR_ . implode('/', $chars) . '/' . $id_category . '.jpg';
+        $path = _PS_CAT_IMG_DIR_ . $id_category . '.jpg';
 
         if (!file_exists($path)) {
             return '';

@@ -42,9 +42,17 @@
                 </thead>
                 <tbody>
                     {foreach from=$ps_cats item=term}
-                        <tr data-name="{$term.name|lower}">
+                        <tr data-name="{$term.name|lower}" class="{if $term.level_depth > 2}soldx-cat-child{elseif $term.level_depth == 2}soldx-cat-root{/if}">
                             <td>
+                                {if $term.level_depth > 2}
+                                    <span class="soldx-cat-indent" style="margin-left:{($term.level_depth - 2) * 20}px">
+                                        <span class="soldx-cat-arrow">↳</span>
+                                    </span>
+                                {/if}
                                 <strong>{$term.name|escape:'htmlall':'UTF-8'}</strong>
+                                {if $term.parent_name && $term.level_depth > 2}
+                                    <span class="soldx-muted soldx-parent-hint">in {$term.parent_name|escape:'htmlall':'UTF-8'}</span>
+                                {/if}
                                 <br><span class="soldx-muted">#{$term.id_category} · {$term.link_rewrite|escape:'htmlall':'UTF-8'}</span>
                             </td>
                             <td class="soldx-cat-cell">
