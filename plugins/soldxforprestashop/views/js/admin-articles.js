@@ -2,6 +2,11 @@
  * Soldx for PrestaShop — Articles page JS.
  *
  * Handles select-all checkbox and form submit validation.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
 (function () {
     'use strict';

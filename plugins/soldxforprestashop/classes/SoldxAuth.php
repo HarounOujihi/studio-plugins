@@ -1,21 +1,28 @@
 <?php
+
 /**
+ * Soldx for PrestaShop — auth & settings.
+ *
  * Auth / settings storage (PrestaShop Configuration).
  *
  * Stores Studio URL + API key + integration id in ps_configuration.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class SoldxAuth
 {
-    const CFG_STUDIO_URL = 'SOLDX_STUDIO_URL';
-    const CFG_API_KEY = 'SOLDX_API_KEY';
-    const CFG_INTEGRATION_ID = 'SOLDX_INTEGRATION_ID';
-    const CFG_ETB_NAME = 'SOLDX_ESTABLISHMENT_NAME';
-    const CFG_ORG_ID = 'SOLDX_ORG_ID';
+    public const CFG_STUDIO_URL = 'SOLDX_STUDIO_URL';
+    public const CFG_API_KEY = 'SOLDX_API_KEY';
+    public const CFG_INTEGRATION_ID = 'SOLDX_INTEGRATION_ID';
+    public const CFG_ETB_NAME = 'SOLDX_ESTABLISHMENT_NAME';
+    public const CFG_ORG_ID = 'SOLDX_ORG_ID';
 
     /** @return string Studio base URL, no trailing slash. */
     public static function studioUrl()
@@ -57,6 +64,7 @@ class SoldxAuth
      * Persist settings from the settings form.
      *
      * @param array $input { studio_url, api_key }
+     *
      * @return bool
      */
     public static function saveSettings($input)

@@ -3,7 +3,7 @@
     <name>soldxforprestashop</name>
     <displayName><![CDATA[Soldx for PrestaShop]]></displayName>
     <version><![CDATA[0.1.0]]></version>
-    <description><![CDATA[Push PrestaShop products, categories, and discounts into Soldx Studio. Manual selection, per-article units/deposit, no auto-sync.]]></description>
+    <description><![CDATA[Push PrestaShop products into Soldx Studio. Manual selection, per-article units/deposit, no auto-sync.]]></description>
     <author><![CDATA[Soldx]]></author>
     <tab><![CDATA[front_office_features]]></tab>
     <is_configurable>1</is_configurable>

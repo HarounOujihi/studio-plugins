@@ -1,10 +1,18 @@
+{*
+ * Soldx for PrestaShop
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
+ *}
 <div class="wrap soldx-wrap">
     <h1 class="soldx-title">Soldx Sync</h1>
     <p class="soldx-subtitle">Connect your PrestaShop shop to Soldx Studio to push products into Studio.</p>
 
     {if $flash}
-        <div class="alert alert-{$flash.type|default:'info'}">
-            <p>{$flash.msg nofilter}</p>
+        <div class="alert alert-{$flash.type|default:'info'|escape:'html':'UTF-8'}">
+            <p>{$flash.msg|escape:'html':'UTF-8'}</p>
         </div>
     {/if}
 
@@ -32,20 +40,20 @@
                     Connected
                 </h2>
                 <p class="soldx-card-meta">
-                    Establishment: <strong>{$etb_name|default:'—'}</strong> ·
-                    Integration: <code>{$integration_short}</code>
+                    Establishment: <strong>{$etb_name|default:'—'|escape:'html':'UTF-8'}</strong> ·
+                    Integration: <code>{$integration_short|escape:'html':'UTF-8'}</code>
                 </p>
                 <p>
-                    <a class="btn btn-primary" href="{$articles_url}">Go to Articles</a>
-                    <a class="btn btn-default" href="{$categories_url}">Category Mapping</a>
+                    <a class="btn btn-primary" href="{$articles_url|escape:'html':'UTF-8'}">Go to Articles</a>
+                    <a class="btn btn-default" href="{$categories_url|escape:'html':'UTF-8'}">Category Mapping</a>
                 </p>
             </div>
         </div>
     {/if}
 
-    <form method="post" action="{$post_url}" class="soldx-form form-horizontal">
+    <form method="post" action="{$post_url|escape:'html':'UTF-8'}" class="soldx-form form-horizontal">
         <input type="hidden" name="soldx_action" value="save" />
-        <input type="hidden" name="token" value="{$token}" />
+        <input type="hidden" name="token" value="{$token|escape:'html':'UTF-8'}" />
 
         <div class="panel">
             <div class="form-group">
@@ -53,7 +61,7 @@
                 <div class="col-lg-9">
                     <input type="url" id="studio_url" name="studio_url" class="form-control"
                            placeholder="https://studio.soldx.tn"
-                           value="{$studio_url}" autocomplete="off" />
+                           value="{$studio_url|escape:'html':'UTF-8'}" autocomplete="off" />
                     <p class="help-block">The base URL of your Soldx Studio installation (no trailing slash).</p>
                 </div>
             </div>
@@ -66,7 +74,7 @@
                            value="" autocomplete="new-password" />
                     <p class="help-block">
                         {if $api_key}
-                            <code>{$api_key_masked}</code>
+                            <code>{$api_key_masked|escape:'html':'UTF-8'}</code>
                             Already set. Leave blank to keep the current key.
                         {else}
                             Get this from Studio &rarr; Settings &rarr; Plugins &rarr; Activate PrestaShop.

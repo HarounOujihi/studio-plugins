@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Soldx for PrestaShop — push products into Soldx Studio.
  *
@@ -7,17 +8,16 @@
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
  * @version   0.1.0
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class Soldxforprestashop extends Module
 {
-    const TAB_CLASS_PARENT = 'AdminSoldx';
-    const TAB_CLASS_SETTINGS = 'AdminSoldxSettings';
-    const TAB_CLASS_CATEGORIES = 'AdminSoldxCategories';
-    const TAB_CLASS_ARTICLES = 'AdminSoldxArticles';
+    public const TAB_CLASS_PARENT = 'AdminSoldx';
+    public const TAB_CLASS_SETTINGS = 'AdminSoldxSettings';
+    public const TAB_CLASS_CATEGORIES = 'AdminSoldxCategories';
+    public const TAB_CLASS_ARTICLES = 'AdminSoldxArticles';
 
     public function __construct()
     {
@@ -64,6 +64,7 @@ class Soldxforprestashop extends Module
         $this->createMappingTable();
 
         // Install tabs
+
         if (!$this->installTabs()) {
             return false;
         }
@@ -99,9 +100,11 @@ class Soldxforprestashop extends Module
         $parent->module = $this->name;
         $parent->icon = 'cloud_upload';
         $parent->name = [];
+
         foreach (Language::getLanguages(false) as $lang) {
             $parent->name[$lang['id_lang']] = 'Soldx';
         }
+
         if (!$parent->add()) {
             return false;
         }
@@ -118,6 +121,7 @@ class Soldxforprestashop extends Module
             $tab->id_parent = $parent->id;
             $tab->module = $this->name;
             $tab->name = [];
+
             foreach (Language::getLanguages(false) as $lang) {
                 $tab->name[$lang['id_lang']] = $label;
             }
@@ -130,8 +134,12 @@ class Soldxforprestashop extends Module
     private function uninstallTabs()
     {
         $classes = [self::TAB_CLASS_PARENT, self::TAB_CLASS_SETTINGS, self::TAB_CLASS_CATEGORIES, self::TAB_CLASS_ARTICLES];
+
         foreach ($classes as $class_name) {
-            $id_tab = (int) Tab::getIdFromClassName($class_name);
+            $id_tab = (int) Db::getInstance()->getValue(
+                'SELECT id_tab FROM ' . _DB_PREFIX_ . 'tab WHERE class_name = "' . pSQL($class_name) . '"'
+            );
+
             if ($id_tab) {
                 $tab = new Tab($id_tab);
                 $tab->delete();
@@ -168,9 +176,11 @@ class Soldxforprestashop extends Module
     public static function getApiClient()
     {
         static $client = null;
+
         if ($client === null) {
             $client = new SoldxApiClient();
         }
+
         return $client;
     }
 
@@ -186,6 +196,7 @@ class Soldxforprestashop extends Module
     public function hookDisplayBackOfficeHeader()
     {
         $controller = Tools::getValue('controller');
+
         if (strpos($controller, 'AdminSoldx') === 0) {
             $this->context->controller->addCSS($this->_path . 'views/css/admin.css');
         }

@@ -1,8 +1,15 @@
 <?php
-/**
- * Admin settings controller — Studio URL + apiKey + Test connection.
- */
 
+/**
+ * Soldx for PrestaShop — settings controller.
+ *
+ * Admin settings controller — Studio URL + apiKey + Test connection.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
+ */
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -17,9 +24,10 @@ class AdminSoldxSettingsController extends ModuleAdminController
 
         // Read & clear flash message from cookie.
         $flash = null;
-        if (isset($this->context->cookie->soldx_flash)) {
-            $flash = json_decode($this->context->cookie->soldx_flash, true);
-            unset($this->context->cookie->soldx_flash);
+
+        if ($this->context->cookie->__isset('soldx_flash')) {
+            $flash = json_decode($this->context->cookie->__get('soldx_flash'), true);
+            $this->context->cookie->__unset('soldx_flash');
         }
 
         $studio_url = SoldxAuth::studioUrl();
@@ -54,6 +62,7 @@ class AdminSoldxSettingsController extends ModuleAdminController
     {
         if (Tools::isSubmit('soldx_action')) {
             $action = Tools::getValue('soldx_action');
+
             switch ($action) {
                 case 'save':
                     return $this->handleSave();
@@ -63,6 +72,7 @@ class AdminSoldxSettingsController extends ModuleAdminController
                     return $this->handleDisconnect();
             }
         }
+
         return true;
     }
 
@@ -73,6 +83,7 @@ class AdminSoldxSettingsController extends ModuleAdminController
             'api_key' => Tools::getValue('api_key'),
         ];
         $ok = SoldxAuth::saveSettings($input);
+
         if ($ok) {
             $this->setFlash('Settings saved.', 'success');
         } else {
@@ -98,7 +109,7 @@ class AdminSoldxSettingsController extends ModuleAdminController
             $result = Soldxforprestashop::getApiClient()->authenticate();
             SoldxAuth::saveAuthResult($result);
             $etb = !empty($result['establishmentName']) ? $result['establishmentName'] : '(unknown)';
-            $this->setFlash('Connection successful. Linked to <strong>' . $etb . '</strong>.', 'success');
+            $this->setFlash('Connection successful. Linked to ' . $etb . '.', 'success');
         } catch (SoldxApiException $e) {
             $this->setFlash('Connection failed: ' . $e->getMessage(), 'error');
         }
@@ -115,6 +126,6 @@ class AdminSoldxSettingsController extends ModuleAdminController
 
     private function setFlash($msg, $type = 'info')
     {
-        $this->context->cookie->soldx_flash = json_encode(['msg' => $msg, 'type' => $type]);
+        $this->context->cookie->__set('soldx_flash', json_encode(['msg' => $msg, 'type' => $type]));
     }
 }

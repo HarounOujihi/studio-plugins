@@ -1,5 +1,8 @@
 <?php
+
 /**
+ * Soldx for PrestaShop — sync engine.
+ *
  * Sync engine — reads a PrestaShop product and pushes it to Studio.
  *
  * Direction: PrestaShop → Studio.
@@ -7,21 +10,30 @@
  * Reads PS Product (name, reference, descriptions, weight, price, images).
  * Builds a WcProductImportDTO-compatible payload from it + user overrides.
  * Pushes via the API client: POST on first sync, PUT on re-sync.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class SoldxSyncEngine
 {
-    private static $instance = null;
+    /** @var Context */
+    private $context;
+
+    /** @var SoldxSyncEngine */
+    private static $instance;
 
     public static function getInstance()
     {
         if (self::$instance === null) {
             self::$instance = new self();
         }
+
         return self::$instance;
     }
 
@@ -32,13 +44,16 @@ class SoldxSyncEngine
     /**
      * Sync a single PS product to Studio.
      *
-     * @param int   $ps_product_id
-     * @param array $overrides { saleUnitId, purchaseUnitId, depositId, tagIds, published }
+     * @param int $ps_product_id
+     * @param array $overrides
+     * @param Context $context
+     *
      * @return array { success, ps_product_id, studio_article_id, reference, created, ... }
      */
-    public function syncProduct($ps_product_id, $overrides = [])
+    public function syncProduct($ps_product_id, $overrides = [], $context = null)
     {
-        $id_lang = (int) Context::getContext()->language->id;
+        $this->context = $context;
+        $id_lang = (int) $this->context->language->id;
         $product = new Product($ps_product_id, true, $id_lang);
         if (!Validate::isLoadedObject($product)) {
             return $this->fail('PS product ' . (int) $ps_product_id . ' not found.');
@@ -132,10 +147,11 @@ class SoldxSyncEngine
      * Build the import DTO from a PS Product + user overrides.
      *
      * @param Product $product
-     * @param array   $overrides
+     * @param array $overrides
      * @param string|null $media_key
-     * @param array       $gallery_keys
-     * @param int         $id_lang
+     * @param array $gallery_keys
+     * @param int $id_lang
+     *
      * @return array
      */
     private function buildDto($product, $overrides, $media_key = null, $gallery_keys = [], $id_lang = null)
@@ -180,8 +196,6 @@ class SoldxSyncEngine
         $tax_rate = $this->estimateTaxRate($product->id);
 
         $published = isset($overrides['published']) ? (bool) $overrides['published'] : true;
-
-        $gallery_keys = is_array($gallery_keys) ? $gallery_keys : [];
 
         // Discount: specific price < base price → percent discount.
         $discount_percent = 0.0;
@@ -254,13 +268,14 @@ class SoldxSyncEngine
      * ps_specific_price directly.
      *
      * @param int $id_product
-     * @param float $base_price  The product's base price from ps_product.
+     * @param float $base_price The product's base price from ps_product
+     *
      * @return array { sale_price: float, from: string|null, to: string|null }
-     *                sale_price is 0.0 when no active specific price exists.
+     *               sale_price is 0.0 when no active specific price exists
      */
     private function getSpecificPriceInfo($id_product, $base_price)
     {
-        $id_shop = (int) Context::getContext()->shop->id;
+        $id_shop = (int) $this->context->shop->id;
 
         $sql = 'SELECT sp.reduction, sp.reduction_type, sp.price, sp.from, sp.to
                 FROM ' . _DB_PREFIX_ . 'specific_price sp
@@ -316,11 +331,12 @@ class SoldxSyncEngine
      * @param int $ps_product_id
      * @param SoldxApiClient $api
      * @param string $org_id
+     *
      * @return array { string|null, string[] }
      */
     private function resolveImages($ps_product_id, $api, $org_id)
     {
-        $id_lang = (int) Context::getContext()->language->id;
+        $id_lang = (int) $this->context->language->id;
         $images = Image::getImages($id_lang, (int) $ps_product_id);
         if (empty($images)) {
             return [null, []];
@@ -347,7 +363,7 @@ class SoldxSyncEngine
             } else {
                 // Build path: img/p/{folder}/{id}.{ext}
                 $image_obj = new Image($id_image);
-                $file_path = _PS_PROD_IMG_DIR_ . $image_obj->getImgFolder() . $id_image . '.' . $image_obj->image_format;
+                $file_path = _PS_IMG_DIR_ . 'p/' . $image_obj->getImgFolder() . $id_image . '.' . $image_obj->image_format;
 
                 if (!file_exists($file_path)) {
                     continue;
@@ -383,15 +399,16 @@ class SoldxSyncEngine
      * Best-effort tax rate for a product.
      *
      * @param int $id_product
+     *
      * @return float|null
      */
     private function estimateTaxRate($id_product)
     {
-        $id_lang = (int) Context::getContext()->language->id;
-        $rate = Tax::getProductTaxRate((int) $id_product, null, Context::getContext());
+        $rate = Tax::getProductTaxRate((int) $id_product, null, $this->context);
         if (isset($rate['rate']) && $rate['rate'] > 0) {
             return (float) $rate['rate'];
         }
+
         return null;
     }
 
@@ -419,6 +436,7 @@ class SoldxSyncEngine
             'categoryIds' => isset($dto['categoryIds']) ? $dto['categoryIds'] : null,
             'tagIds' => isset($dto['tagIds']) ? $dto['tagIds'] : null,
         ];
+
         return hash('sha256', json_encode($relevant));
     }
 
@@ -461,6 +479,7 @@ class SoldxCategoryResolver
                 $resolved[] = $studio_id;
             }
         }
+
         return $resolved;
     }
 }

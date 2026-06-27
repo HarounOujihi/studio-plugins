@@ -1,0 +1,318 @@
+<?php
+/**
+ * @var $block \Soldx\Integration\Block\Adminhtml\Articles
+ */
+$products = $block->getProducts();
+$counts = $block->getCounts();
+$searchQuery = $block->getSearchQuery();
+$currentPage = $block->getCurrentPage();
+$pageSize = $block->getPageSize();
+$totalProducts = $block->getTotalProducts();
+$totalPages = max(1, (int) ceil($totalProducts / $pageSize));
+$syncUrl = $block->getSyncUrl();
+$toggleUrl = $block->getToggleUrl();
+$formKey = $block->getFormKey();
+?>
+<style>
+.soldx-articles .soldx-dashboard {
+    display: flex; gap: 12px; margin-bottom: 20px;
+}
+.soldx-articles .soldx-stat {
+    background: #fff; border: 1px solid #d6d6d6; border-radius: 4px;
+    padding: 14px 20px; min-width: 120px; text-align: center;
+}
+.soldx-articles .soldx-stat .num { font-size: 28px; font-weight: 700; display: block; }
+.soldx-articles .soldx-stat .lbl { color: #666; font-size: 12px; text-transform: uppercase; }
+.soldx-articles .soldx-stat.synced .num { color: #1a7e34; }
+.soldx-articles .soldx-stat.new .num { color: #2c6cb0; }
+.soldx-articles .soldx-stat.error .num { color: #c00; }
+.soldx-articles .soldx-stat.pending .num { color: #b07d00; }
+.soldx-articles .soldx-toolbar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.soldx-articles .soldx-search {
+    display: flex; align-items: center; gap: 8px;
+}
+.soldx-articles .soldx-search input {
+    width: 260px; padding: 6px 10px; border: 1px solid #b0b0b0; border-radius: 3px;
+}
+.soldx-articles .soldx-table {
+    width: 100%; border-collapse: collapse;
+}
+.soldx-articles .soldx-table th {
+    background: #f4f4f4; padding: 10px 8px; text-align: left;
+    font-weight: 600; font-size: 12px; border-bottom: 2px solid #d6d6d6;
+}
+.soldx-articles .soldx-table td {
+    padding: 8px; border-bottom: 1px solid #e0e0e0; vertical-align: middle;
+}
+.soldx-articles .soldx-table tr:hover td { background: #fafafa; }
+.soldx-articles .soldx-thumb {
+    width: 40px; height: 40px; border-radius: 3px; object-fit: cover;
+    border: 1px solid #ddd;
+}
+.soldx-articles .soldx-thumb-placeholder {
+    width: 40px; height: 40px; border-radius: 3px; background: #f0f0f0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: 10px; border: 1px solid #ddd;
+}
+.soldx-articles .soldx-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+}
+.soldx-articles .soldx-badge.synced { background: #d4edda; color: #155724; }
+.soldx-articles .soldx-badge.new { background: #cce5ff; color: #004085; }
+.soldx-articles .soldx-badge.error { background: #f8d7da; color: #721c24; }
+.soldx-articles .soldx-badge.pending { background: #fff3cd; color: #856404; }
+.soldx-articles .soldx-cat-badge {
+    display: inline-block; padding: 2px 8px; margin: 1px;
+    background: #e8e8e8; border-radius: 3px; font-size: 11px; color: #555;
+}
+.soldx-articles .soldx-actions { display: flex; gap: 6px; }
+.soldx-articles .soldx-btn {
+    padding: 5px 12px; border-radius: 3px; font-size: 12px;
+    border: 1px solid #ccc; cursor: pointer; background: #fff;
+}
+.soldx-articles .soldx-btn.primary { background: #2c6cb0; color: #fff; border-color: #2c6cb0; }
+.soldx-articles .soldx-btn.primary:hover { background: #1a5599; }
+.soldx-articles .soldx-btn:disabled { opacity: 0.5; cursor: default; }
+.soldx-articles .soldx-pagination {
+    display: flex; align-items: center; gap: 8px; margin-top: 16px;
+    justify-content: space-between;
+}
+.soldx-articles .soldx-pagination .page-info { color: #666; font-size: 12px; }
+.soldx-articles .soldx-pagination .page-links a {
+    padding: 4px 10px; border: 1px solid #ccc; border-radius: 3px;
+    text-decoration: none; color: #2c6cb0;
+}
+.soldx-articles .soldx-pagination .page-links a.disabled { color: #aaa; pointer-events: none; }
+</style>
+
+<div class="soldx-articles">
+    <?php if (!$block->isConnected()): ?>
+        <div class="message message-warning">
+            <span><?= $escaper->escapeHtml(__('Not connected to Studio. Please configure the integration in Settings first.')) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <div class="soldx-dashboard">
+        <div class="soldx-stat synced">
+            <span class="num"><?= (int) $counts['synced'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Synced')) ?></span>
+        </div>
+        <div class="soldx-stat new">
+            <span class="num"><?= (int) $counts['new'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('New')) ?></span>
+        </div>
+        <div class="soldx-stat error">
+            <span class="num"><?= (int) $counts['errors'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Errors')) ?></span>
+        </div>
+        <div class="soldx-stat pending">
+            <span class="num"><?= (int) $counts['pending'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Pending')) ?></span>
+        </div>
+    </div>
+
+    <div class="soldx-toolbar">
+        <form method="GET" action="" class="soldx-search">
+            <input type="text" name="q" value="<?= $escaper->escapeHtmlAttr($searchQuery) ?>"
+                   placeholder="<?= $escaper->escapeHtmlAttr(__('Search by name or SKU...')) ?>" />
+            <button type="submit" class="soldx-btn"><?= $escaper->escapeHtml(__('Search')) ?></button>
+            <?php if ($searchQuery !== ''): ?>
+                <a href="<?= $escaper->escapeUrl($block->getUrl('soldx/articles')) ?>" class="soldx-btn"><?= $escaper->escapeHtml(__('Clear')) ?></a>
+            <?php endif; ?>
+        </form>
+        <?php if ($block->isConnected() && $totalProducts > 0): ?>
+            <div style="margin-left: auto;">
+                <button type="button" class="soldx-btn primary" id="soldx-sync-all-btn"
+                        data-url="<?= $escaper->escapeUrl($syncUrl) ?>"
+                        data-form-key="<?= $escaper->escapeHtmlAttr($formKey) ?>">
+                    <?= $escaper->escapeHtml(__('Sync All')) ?>
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <?php if (empty($products)): ?>
+        <div class="message message-info">
+            <span><?= $escaper->escapeHtml(__('No products found.')) ?></span>
+        </div>
+    <?php else: ?>
+        <table class="soldx-table">
+            <thead>
+                <tr>
+                    <th style="width:40px;">
+                        <input type="checkbox" id="soldx-select-all" />
+                    </th>
+                    <th style="width:50px;"><?= $escaper->escapeHtml(__('Image')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Product')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('SKU')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Price')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Categories')) ?></th>
+                    <th><?= $escaper->escapeHtml(__('Status')) ?></th>
+                    <th style="width:120px;"><?= $escaper->escapeHtml(__('Actions')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($products as $p): ?>
+                    <tr data-product-id="<?= (int) $p['id'] ?>">
+                        <td>
+                            <input type="checkbox" class="soldx-row-check" value="<?= (int) $p['id'] ?>" />
+                        </td>
+                        <td>
+                            <?php if (!empty($p['image_url'])): ?>
+                                <img src="<?= $escaper->escapeUrl($p['image_url']) ?>"
+                                     class="soldx-thumb" alt="" />
+                            <?php else: ?>
+                                <span class="soldx-thumb-placeholder">N/A</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <strong><?= $escaper->escapeHtml($p['name']) ?></strong>
+                            <div style="color:#888; font-size:11px;">ID: <?= (int) $p['id'] ?></div>
+                        </td>
+                        <td><code><?= $escaper->escapeHtml($p['sku']) ?></code></td>
+                        <td><?= $escaper->escapeHtml($block->formatPrice((float) $p['price'])) ?></td>
+                        <td>
+                            <?php foreach ($p['category_names'] as $catName): ?>
+                                <span class="soldx-cat-badge"><?= $escaper->escapeHtml($catName) ?></span>
+                            <?php endforeach; ?>
+                        </td>
+                        <td>
+                            <?php $syncStatus = $p['sync_status']; ?>
+                            <span class="soldx-badge <?= $escaper->escapeHtmlAttr($syncStatus) ?>">
+                                <?= $escaper->escapeHtml(ucfirst($syncStatus)) ?>
+                            </span>
+                            <?php if ($syncStatus === 'synced' && !empty($p['last_sync'])): ?>
+                                <div style="color:#888; font-size:10px; margin-top:2px;">
+                                    <?= $escaper->escapeHtml($p['last_sync']) ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($syncStatus === 'error' && !empty($p['last_error'])): ?>
+                                <div style="color:#c00; font-size:10px; margin-top:2px; max-width:200px; overflow:hidden; text-overflow:ellipsis;"
+                                     title="<?= $escaper->escapeHtmlAttr($p['last_error']) ?>">
+                                    <?= $escaper->escapeHtml($p['last_error']) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="soldx-actions">
+                                <?php if ($block->isConnected()): ?>
+                                    <button class="soldx-btn primary soldx-sync-btn"
+                                            data-product-id="<?= (int) $p['id'] ?>"
+                                            data-url="<?= $escaper->escapeUrl($syncUrl) ?>"
+                                            data-form-key="<?= $escaper->escapeHtmlAttr($formKey) ?>">
+                                        <span><?= $escaper->escapeHtml(__('Sync')) ?></span>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="soldx-pagination">
+            <span class="page-info">
+                <?= $escaper->escapeHtml(__('%1 product(s)', $totalProducts)) ?>
+            </span>
+            <div class="page-links">
+                <?php if ($currentPage > 1): ?>
+                    <a href="<?= $escaper->escapeUrl($block->getUrl('soldx/articles', ['p' => $currentPage - 1, 'q' => $searchQuery])) ?>">&laquo; <?= $escaper->escapeHtml(__('Prev')) ?></a>
+                <?php else: ?>
+                    <a class="disabled">&laquo; <?= $escaper->escapeHtml(__('Prev')) ?></a>
+                <?php endif; ?>
+                <span style="padding:4px 8px;"><?= $currentPage ?> / <?= $totalPages ?></span>
+                <?php if ($currentPage < $totalPages): ?>
+                    <a href="<?= $escaper->escapeUrl($block->getUrl('soldx/articles', ['p' => $currentPage + 1, 'q' => $searchQuery])) ?>"><?= $escaper->escapeHtml(__('Next')) ?> &raquo;</a>
+                <?php else: ?>
+                    <a class="disabled"><?= $escaper->escapeHtml(__('Next')) ?> &raquo;</a>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<script>
+require(['jquery'], function($) {
+    // Select all
+    $('#soldx-select-all').on('change', function() {
+        $('.soldx-row-check').prop('checked', this.checked);
+    });
+
+    // Sync single product
+    $(document).on('click', '.soldx-sync-btn', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var productId = btn.data('product-id');
+        btn.prop('disabled', true).find('span').text('...');
+
+        $.ajax({
+            url: btn.data('url'),
+            type: 'POST',
+            data: { form_key: btn.data('form-key'), product_id: productId },
+            dataType: 'json'
+        }).done(function(data) {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || data.message || 'Sync failed');
+                btn.prop('disabled', false).find('span').text('Sync');
+            }
+        }).fail(function() {
+            alert('Request failed');
+            btn.prop('disabled', false).find('span').text('Sync');
+        });
+    });
+
+    // Sync all (sequential AJAX)
+    $('#soldx-sync-all-btn').on('click', function() {
+        var btn = $(this);
+        var url = btn.data('url');
+        var formKey = btn.data('form-key');
+        var ids = [];
+
+        $('.soldx-row-check:checked').each(function() {
+            ids.push($(this).val());
+        });
+
+        if (ids.length === 0) {
+            $('.soldx-row-check').each(function() {
+                ids.push($(this).val());
+            });
+        }
+
+        if (ids.length === 0) return;
+
+        btn.prop('disabled', true).text('Syncing ' + ids.length + ' products...');
+
+        var idx = 0;
+        var success = 0, failed = 0;
+
+        function syncNext() {
+            if (idx >= ids.length) {
+                btn.text('Done: ' + success + ' ok, ' + failed + ' failed');
+                setTimeout(function() { location.reload(); }, 1500);
+                return;
+            }
+            var pid = ids[idx];
+            idx++;
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: { form_key: formKey, product_id: pid },
+                dataType: 'json'
+            }).done(function(data) {
+                if (data.success) success++; else failed++;
+            }).fail(function() {
+                failed++;
+            }).always(function() {
+                btn.text('Syncing... (' + idx + '/' + ids.length + ')');
+                syncNext();
+            });
+        }
+        syncNext();
+    });
+});
+</script>

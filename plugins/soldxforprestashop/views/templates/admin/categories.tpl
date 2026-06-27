@@ -1,13 +1,21 @@
+{*
+ * Soldx for PrestaShop
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
+ *}
 <div class="wrap soldx-wrap">
     <h1 class="soldx-title">
         Soldx Categories
-        <a class="btn btn-default" href="{$refresh_url}">Refresh</a>
+        <a class="btn btn-default" href="{$refresh_url|escape:'html':'UTF-8'}">Refresh</a>
     </h1>
     <p class="soldx-subtitle">Map your PrestaShop categories to Soldx Studio categories. Products pushed to Studio will be auto-categorized based on these mappings.</p>
 
     {if $flash}
-        <div class="alert alert-{$flash.type|default:'info'}">
-            <p>{$flash.msg|escape:'htmlall':'UTF-8'}</p>
+        <div class="alert alert-{$flash.type|default:'info'|escape:'html':'UTF-8'}">
+            <p>{$flash.msg|escape:'html':'UTF-8'}</p>
         </div>
     {/if}
 
@@ -29,9 +37,9 @@
             <span class="soldx-search-count"></span>
         </p>
 
-        <form method="post" action="{$post_url}" class="soldx-sync-form">
+        <form method="post" action="{$post_url|escape:'html':'UTF-8'}" class="soldx-sync-form">
             <input type="hidden" name="soldx_action" value="save_categories" />
-            <input type="hidden" name="token" value="{$token}" />
+            <input type="hidden" name="token" value="{$token|escape:'html':'UTF-8'}" />
 
             <table class="table soldx-table">
                 <thead>
@@ -42,10 +50,10 @@
                 </thead>
                 <tbody>
                     {foreach from=$ps_cats item=term}
-                        <tr data-name="{$term.name|lower}" class="{if $term.level_depth > 2}soldx-cat-child{elseif $term.level_depth == 2}soldx-cat-root{/if}">
+                        <tr data-name="{$term.name|lower|escape:'html':'UTF-8'}" class="{if $term.level_depth > 2}soldx-cat-child{elseif $term.level_depth == 2}soldx-cat-root{/if}">
                             <td>
                                 {if $term.level_depth > 2}
-                                    <span class="soldx-cat-indent" style="margin-left:{($term.level_depth - 2) * 20}px">
+                                    <span class="soldx-cat-indent" style="margin-left:{(($term.level_depth - 2) * 20)|intval}px">
                                         <span class="soldx-cat-arrow">↳</span>
                                     </span>
                                 {/if}
@@ -53,15 +61,15 @@
                                 {if $term.parent_name && $term.level_depth > 2}
                                     <span class="soldx-muted soldx-parent-hint">in {$term.parent_name|escape:'htmlall':'UTF-8'}</span>
                                 {/if}
-                                <br><span class="soldx-muted">#{$term.id_category} · {$term.link_rewrite|escape:'htmlall':'UTF-8'}</span>
+                                <br><span class="soldx-muted">#{$term.id_category|intval} · {$term.link_rewrite|escape:'htmlall':'UTF-8'}</span>
                             </td>
                             <td class="soldx-cat-cell">
-                                <select name="mapping[{$term.id_category}]" class="soldx-select soldx-cat-select" style="min-width:200px">
+                                <select name="mapping[{$term.id_category|intval}]" class="soldx-select soldx-cat-select" style="min-width:200px">
                                     <option value="">— Not mapped —</option>
                                     {foreach from=$studio_cats item=cat}
                                         {assign var="cat_label" value=$cat.designation|default:$cat.reference|default:$cat.id}
                                         {assign var="selected_val" value=$mapping[$term.id_category]|default:''}
-                                        <option value="{$cat.id}" {if $selected_val == $cat.id}selected{/if}>
+                                        <option value="{$cat.id|escape:'html':'UTF-8'}" {if $selected_val == $cat.id}selected{/if}>
                                             {if !empty($cat.idParent)}— {/if}{$cat_label|escape:'htmlall':'UTF-8'}
                                         </option>
                                     {/foreach}
@@ -69,8 +77,8 @@
                                 <button type="button"
                                         class="btn btn-default btn-sm soldx-create-cat-btn"
                                         data-wc-name="{$term.name|escape:'htmlall':'UTF-8'}"
-                                        data-wc-term-id="{$term.id_category}"
-                                        data-wc-parent="{$term.id_parent}">+ Studio</button>
+                                        data-wc-term-id="{$term.id_category|intval}"
+                                        data-wc-parent="{$term.id_parent|intval}">+ Studio</button>
                             </td>
                         </tr>
                     {/foreach}

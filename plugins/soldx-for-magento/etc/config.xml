@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <soldx>
+            <connection>
+                <api_base_url></api_base_url>
+                <api_key></api_key>
+                <auth_token></auth_token>
+            </connection>
+            <auth_result>
+                <integration_id></integration_id>
+                <integration_name></integration_name>
+                <connected_at></connected_at>
+                <status>disconnected</status>
+            </auth_result>
+            <sync>
+                <auto_sync>0</auto_sync>
+                <default_tax_rate>0</default_tax_rate>
+            </sync>
+        </soldx>
+    </default>
+</config>

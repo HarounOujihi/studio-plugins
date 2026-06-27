@@ -1,0 +1,180 @@
+<?php
+/**
+ * @var $block \Soldx\Integration\Block\Adminhtml\Settings
+ */
+$connected = $block->isConnected();
+$integrationName = $block->getIntegrationName();
+$integrationId = $block->getIntegrationId();
+$status = $block->getStatus();
+$apiBaseUrl = $block->getApiBaseUrl();
+?>
+<style>
+.soldx-settings { max-width: 700px; }
+.soldx-card {
+    background: #fff; border: 1px solid #d6d6d6; border-radius: 6px;
+    padding: 24px; margin-bottom: 20px;
+}
+.soldx-card-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid #eee;
+}
+.soldx-card-header .icon {
+    width: 48px; height: 48px; border-radius: 8px;
+    background: #2c6cb0; color: #fff; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700;
+}
+.soldx-card-header h2 { margin: 0; font-size: 18px; }
+.soldx-card-header .subtitle { color: #888; font-size: 13px; }
+
+.soldx-info-row {
+    display: flex; padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+}
+.soldx-info-row:last-child { border-bottom: none; }
+.soldx-info-row .label {
+    width: 160px; font-weight: 600; color: #555; font-size: 13px;
+}
+.soldx-info-row .value { flex: 1; font-size: 13px; }
+
+.soldx-status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.soldx-status-badge.connected { background: #d4edda; color: #155724; }
+.soldx-status-badge.disconnected { background: #f8d7da; color: #721c24; }
+.soldx-status-dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+.soldx-status-dot.connected { background: #28a745; }
+.soldx-status-dot.disconnected { background: #dc3545; }
+
+.soldx-form-group { margin-bottom: 20px; }
+.soldx-form-group label {
+    display: block; margin-bottom: 6px; font-weight: 600;
+    color: #333; font-size: 13px;
+}
+.soldx-form-group input {
+    width: 100%; padding: 10px 14px; border: 1px solid #b0b0b0;
+    border-radius: 4px; font-size: 14px; box-sizing: border-box;
+}
+.soldx-form-group input:focus {
+    border-color: #2c6cb0; outline: none;
+    box-shadow: 0 0 0 2px rgba(44, 108, 176, 0.15);
+}
+.soldx-form-group .hint { color: #999; font-size: 12px; margin-top: 4px; }
+
+.soldx-btn-row { display: flex; gap: 10px; margin-top: 24px; }
+.soldx-btn {
+    padding: 10px 28px; border-radius: 4px; font-size: 14px; font-weight: 600;
+    border: 1px solid #ccc; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.soldx-btn.primary { background: #2c6cb0; color: #fff; border-color: #2c6cb0; }
+.soldx-btn.primary:hover { background: #1a5599; }
+.soldx-btn.danger { background: #fff; color: #c00; border-color: #c00; }
+.soldx-btn.danger:hover { background: #fef0f0; }
+.soldx-btn.success { background: #28a745; color: #fff; border-color: #28a745; }
+</style>
+
+<div class="soldx-settings">
+    <?php if ($connected): ?>
+        <div class="soldx-card">
+            <div class="soldx-card-header">
+                <div class="icon">S</div>
+                <div>
+                    <h2><?= $escaper->escapeHtml(__('Studio Connection')) ?></h2>
+                    <div class="subtitle"><?= $escaper->escapeHtml(__('Your store is linked to Soldx Studio')) ?></div>
+                </div>
+            </div>
+
+            <div class="soldx-info-row">
+                <div class="label"><?= $escaper->escapeHtml(__('Status')) ?></div>
+                <div class="value">
+                    <span class="soldx-status-badge connected">
+                        <span class="soldx-status-dot connected"></span>
+                        <?= $escaper->escapeHtml(__('Connected')) ?>
+                    </span>
+                </div>
+            </div>
+            <div class="soldx-info-row">
+                <div class="label"><?= $escaper->escapeHtml(__('Establishment')) ?></div>
+                <div class="value">
+                    <strong><?= $escaper->escapeHtml($integrationName ?: 'Unknown') ?></strong>
+                </div>
+            </div>
+            <?php if ($integrationId): ?>
+            <div class="soldx-info-row">
+                <div class="label"><?= $escaper->escapeHtml(__('Integration ID')) ?></div>
+                <div class="value"><code><?= $escaper->escapeHtml($integrationId) ?></code></div>
+            </div>
+            <?php endif; ?>
+            <div class="soldx-info-row">
+                <div class="label"><?= $escaper->escapeHtml(__('Studio URL')) ?></div>
+                <div class="value"><?= $escaper->escapeHtml($apiBaseUrl) ?></div>
+            </div>
+
+            <div class="soldx-btn-row">
+                <a href="<?= $escaper->escapeUrl($block->getUrl('soldx/articles')) ?>" class="soldx-btn primary">
+                    <?= $escaper->escapeHtml(__('Go to Articles')) ?>
+                </a>
+                <a href="<?= $escaper->escapeUrl($block->getUrl('soldx/categories')) ?>" class="soldx-btn success">
+                    <?= $escaper->escapeHtml(__('Categories')) ?>
+                </a>
+                <form method="post" action="<?= $escaper->escapeUrl($block->getDisconnectUrl()) ?>" style="display:inline;">
+                    <input name="form_key" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>" />
+                    <button type="submit" class="soldx-btn danger" onclick="return confirm('Disconnect from Studio?');">
+                        <?= $escaper->escapeHtml(__('Disconnect')) ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="soldx-card">
+            <div class="soldx-card-header">
+                <div class="icon">S</div>
+                <div>
+                    <h2><?= $escaper->escapeHtml(__('Connect to Studio')) ?></h2>
+                    <div class="subtitle"><?= $escaper->escapeHtml(__('Enter your Studio URL and API key to get started')) ?></div>
+                </div>
+            </div>
+
+            <form method="post" action="<?= $escaper->escapeUrl($block->getConnectUrl()) ?>">
+                <input name="form_key" type="hidden" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>" />
+
+                <div class="soldx-form-group">
+                    <label for="api_base_url"><?= $escaper->escapeHtml(__('Studio URL')) ?></label>
+                    <input type="text"
+                           id="api_base_url"
+                           name="api_base_url"
+                           placeholder="https://studio.soldx.com"
+                           value="<?= $escaper->escapeHtmlAttr($apiBaseUrl) ?>" />
+                    <div class="hint"><?= $escaper->escapeHtml(__('The base URL of your Soldx Studio instance')) ?></div>
+                </div>
+
+                <div class="soldx-form-group">
+                    <label for="api_key"><?= $escaper->escapeHtml(__('API Key')) ?></label>
+                    <input type="password"
+                           id="api_key"
+                           name="api_key"
+                           placeholder="64-character hexadecimal key"
+                           autocomplete="off" />
+                    <div class="hint">
+                        <?= $escaper->escapeHtml(__('Generate this from Studio > Settings > Plugins')) ?>
+                    </div>
+                </div>
+
+                <div class="soldx-btn-row">
+                    <button type="submit" class="soldx-btn primary">
+                        <?= $escaper->escapeHtml(__('Connect to Studio')) ?>
+                    </button>
+                </div>
+            </form>
+
+            <?php if ($status !== '' && $status !== 'disconnected'): ?>
+                <div style="margin-top: 16px; padding: 12px 16px; background: #f8d7da; border-radius: 4px; color: #721c24; font-size: 13px;">
+                    <?= $escaper->escapeHtml(__('Connection error: %1', $status)) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</div>

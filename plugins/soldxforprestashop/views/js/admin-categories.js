@@ -2,6 +2,11 @@
  * Soldx for PrestaShop — Categories page JS.
  *
  * Handles: live search/filter, AJAX category creation, "Create All" batch.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
 (function () {
     'use strict';

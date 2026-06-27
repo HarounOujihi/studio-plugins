@@ -1,11 +1,19 @@
+{*
+ * Soldx for PrestaShop
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
+ *}
 <div class="wrap soldx-wrap soldx-wrap--fluid">
     <h1 class="soldx-title">
         Soldx Articles
-        <a class="btn btn-default btn-sm" href="{$base_url}">Refresh</a>
+        <a class="btn btn-default btn-sm" href="{$base_url|escape:'html':'UTF-8'}">Refresh</a>
     </h1>
     <p class="soldx-subtitle">
         Select PrestaShop products to push into Soldx Studio. Choose a sale unit (required), purchase unit, and deposit for each.
-        <a class="btn btn-default btn-sm" href="{$cats_url}">Category Mapping</a>
+        <a class="btn btn-default btn-sm" href="{$cats_url|escape:'html':'UTF-8'}">Category Mapping</a>
     </p>
     <p class="soldx-safety-inline">
         <span class="icon-shield"></span>
@@ -16,33 +24,40 @@
         <div class="alert alert-danger">
             <p>Could not load establishment options from Studio. Check your connection in Settings, then retry.</p>
         </div>
-        <p><a class="btn btn-default" href="{$settings_url}">Open Settings</a></p>
+        <p><a class="btn btn-default" href="{$settings_url|escape:'html':'UTF-8'}">Open Settings</a></p>
     {else}
 
     {if $flash}
-        <div class="alert alert-{$flash.type|default:'info'}">
-            <p>{$flash.msg nofilter}</p>
+        <div class="alert alert-{$flash.type|default:'info'|escape:'html':'UTF-8'}">
+            <p>{$flash.msg|escape:'html':'UTF-8'}</p>
+            {if !empty($flash.errors)}
+                <details><summary>Show errors</summary><ul style="margin-top:6px">
+                    {foreach from=$flash.errors item=err}
+                        <li><code>{$err|escape:'html':'UTF-8'}</code></li>
+                    {/foreach}
+                </ul></details>
+            {/if}
         </div>
     {/if}
 
     {* Search form *}
-    <form method="get" action="{$base_url}" class="soldx-search-form">
+    <form method="get" action="{$base_url|escape:'html':'UTF-8'}" class="soldx-search-form">
         <input type="hidden" name="controller" value="AdminSoldxArticles" />
-        <input type="hidden" name="token" value="{$token}" />
-        <input type="search" id="soldx-q" name="q" value="{$search}" class="form-control"
+        <input type="hidden" name="token" value="{$token|escape:'html':'UTF-8'}" />
+        <input type="search" id="soldx-q" name="q" value="{$search|escape:'html':'UTF-8'}" class="form-control"
                placeholder="Search by name or reference…" style="width:300px;display:inline-block" />
         <button type="submit" class="btn btn-default">Search</button>
         {if $search != ''}
-            <a class="btn btn-link" href="{$base_url}">Clear</a>
+            <a class="btn btn-link" href="{$base_url|escape:'html':'UTF-8'}">Clear</a>
         {/if}
     </form>
 
     {* Push form *}
-    <form method="post" action="{$post_url}" class="soldx-sync-form" id="soldx-sync-form">
+    <form method="post" action="{$post_url|escape:'html':'UTF-8'}" class="soldx-sync-form" id="soldx-sync-form">
         <input type="hidden" name="soldx_action" value="sync_selected" />
-        <input type="hidden" name="return_page" value="{$page}" />
-        <input type="hidden" name="return_q" value="{$search}" />
-        <input type="hidden" name="token" value="{$token}" />
+        <input type="hidden" name="return_page" value="{$page|escape:'html':'UTF-8'}" />
+        <input type="hidden" name="return_q" value="{$search|escape:'html':'UTF-8'}" />
+        <input type="hidden" name="token" value="{$token|escape:'html':'UTF-8'}" />
 
         <div class="tablenav top soldx-tablenav">
             <div class="alignleft actions bulkactions">
@@ -51,16 +66,16 @@
                 </button>
             </div>
             <div class="tablenav-pages">
-                <span class="displaying-num">{$total} item(s)</span>
+                <span class="displaying-num">{$total|intval} item(s)</span>
                 {if $pages > 1}
                     {if $page > 1}
-                        <a class="btn btn-default btn-sm" href="{$base_url}&paged={$page - 1}{if $search}&q={$search}{/if}">‹</a>
+                        <a class="btn btn-default btn-sm" href="{$base_url|escape:'html':'UTF-8'}&amp;paged={($page - 1)|intval}{if $search}&amp;q={$search|escape:'html':'UTF-8'}{/if}">‹</a>
                     {else}
                         <span class="btn btn-default btn-sm disabled">‹</span>
                     {/if}
-                    <span class="tablenav-paging-text">{$page} of {$pages}</span>
+                    <span class="tablenav-paging-text">{$page|intval} of {$pages|intval}</span>
                     {if $page < $pages}
-                        <a class="btn btn-default btn-sm" href="{$base_url}&paged={$page + 1}{if $search}&q={$search}{/if}">›</a>
+                        <a class="btn btn-default btn-sm" href="{$base_url|escape:'html':'UTF-8'}&amp;paged={($page + 1)|intval}{if $search}&amp;q={$search|escape:'html':'UTF-8'}{/if}">›</a>
                     {else}
                         <span class="btn btn-default btn-sm disabled">›</span>
                     {/if}
@@ -99,29 +114,29 @@
                     {assign var="dp" value=$defaults.depositId}
                     <tr>
                         <td class="soldx-check">
-                            <input type="checkbox" name="product_ids[]" value="{$pid}" class="soldx-row-check" />
+                            <input type="checkbox" name="product_ids[]" value="{$pid|intval}" class="soldx-row-check" />
                         </td>
                         <td class="soldx-thumb">
                             {if $p.image_url}
-                                <img src="{$p.image_url}" class="soldx-thumb-img" alt="" />
+                                <img src="{$p.image_url|escape:'html':'UTF-8'}" class="soldx-thumb-img" alt="" />
                             {else}
                                 <span class="soldx-thumb-placeholder">—</span>
                             {/if}
                         </td>
                         <td class="soldx-name">
                             {$p.name|escape:'html':'UTF-8'}
-                            <br><span class="soldx-muted">#{$pid}</span>
+                            <br><span class="soldx-muted">#{$pid|intval}</span>
                         </td>
                         <td class="soldx-sku">
                             <code>{if $p.reference}{$p.reference|escape:'html':'UTF-8'}{else}—{/if}</code>
                         </td>
                         <td class="soldx-price">
-                            {Tools::displayPrice($p.price)}
+                            {Tools::displayPrice($p.price)|escape:'html':'UTF-8'}
                         </td>
                         <td class="soldx-discount">
                             {if $p.has_discount}
-                                <span class="soldx-badge soldx-badge--warn">-{$p.discount_percent|string_format:"%.0f"}%</span>
-                                <br><span class="soldx-muted">{Tools::displayPrice($p.sale_price)}</span>
+                                <span class="soldx-badge soldx-badge--warn">-{$p.discount_percent|string_format:"%.0f"|escape:'html':'UTF-8'}%</span>
+                                <br><span class="soldx-muted">{Tools::displayPrice($p.sale_price)|escape:'html':'UTF-8'}</span>
                             {else}
                                 <span class="soldx-muted">—</span>
                             {/if}
@@ -159,48 +174,48 @@
 
                                     <label class="soldx-pill{if $is_matched} soldx-pill--on{/if}">
                                         <input type="checkbox"
-                                               name="overrides[{$pid}][tagIds][]"
-                                               value="{$tag_id}"{if $is_matched} checked{/if} />
+                                               name="overrides[{$pid|intval}][tagIds][]"
+                                               value="{$tag_id|escape:'html':'UTF-8'}"{if $is_matched} checked{/if} />
                                         {$tag_lbl|escape:'html':'UTF-8'}
                                     </label>
                                 {/foreach}
                             </div>
                         </td>
                         <td class="soldx-unit">
-                            <select name="overrides[{$pid}][saleUnitId]" class="soldx-select" required>
+                            <select name="overrides[{$pid|intval}][saleUnitId]" class="soldx-select" required>
                                 <option value="">— Select —</option>
                                 {foreach from=$units item=opt}
                                     {assign var="opt_label" value=$opt.designation|default:$opt.reference|default:$opt.id}
-                                    <option value="{$opt.id}" {if $su == $opt.id}selected{/if}>
+                                    <option value="{$opt.id|escape:'html':'UTF-8'}" {if $su == $opt.id}selected{/if}>
                                         {$opt_label|escape:'html':'UTF-8'}
                                     </option>
                                 {/foreach}
                             </select>
                         </td>
                         <td class="soldx-unit">
-                            <select name="overrides[{$pid}][purchaseUnitId]" class="soldx-select">
+                            <select name="overrides[{$pid|intval}][purchaseUnitId]" class="soldx-select">
                                 <option value="">— Select —</option>
                                 {foreach from=$units item=opt}
                                     {assign var="opt_label" value=$opt.designation|default:$opt.reference|default:$opt.id}
-                                    <option value="{$opt.id}" {if $pu == $opt.id}selected{/if}>
+                                    <option value="{$opt.id|escape:'html':'UTF-8'}" {if $pu == $opt.id}selected{/if}>
                                         {$opt_label|escape:'html':'UTF-8'}
                                     </option>
                                 {/foreach}
                             </select>
                         </td>
                         <td class="soldx-deposit">
-                            <select name="overrides[{$pid}][depositId]" class="soldx-select">
+                            <select name="overrides[{$pid|intval}][depositId]" class="soldx-select">
                                 <option value="">— Select —</option>
                                 {foreach from=$deposits item=opt}
                                     {assign var="opt_label" value=$opt.designation|default:$opt.reference|default:$opt.id}
-                                    <option value="{$opt.id}" {if $dp == $opt.id}selected{/if}>
+                                    <option value="{$opt.id|escape:'html':'UTF-8'}" {if $dp == $opt.id}selected{/if}>
                                         {$opt_label|escape:'html':'UTF-8'}
                                     </option>
                                 {/foreach}
                             </select>
                         </td>
                         <td class="soldx-publish">
-                            <input type="checkbox" name="overrides[{$pid}][published]" value="1" checked />
+                            <input type="checkbox" name="overrides[{$pid|intval}][published]" value="1" checked />
                         </td>
                         <td class="soldx-status">
                             {if isset($mappings[$pid])}
@@ -224,16 +239,16 @@
 
         <div class="tablenav bottom soldx-tablenav">
             <div class="tablenav-pages">
-                <span class="displaying-num">{$total} item(s)</span>
+                <span class="displaying-num">{$total|intval} item(s)</span>
                 {if $pages > 1}
                     {if $page > 1}
-                        <a class="btn btn-default btn-sm" href="{$base_url}&paged={$page - 1}{if $search}&q={$search}{/if}">‹</a>
+                        <a class="btn btn-default btn-sm" href="{$base_url|escape:'html':'UTF-8'}&amp;paged={($page - 1)|intval}{if $search}&amp;q={$search|escape:'html':'UTF-8'}{/if}">‹</a>
                     {else}
                         <span class="btn btn-default btn-sm disabled">‹</span>
                     {/if}
-                    <span class="tablenav-paging-text">{$page} of {$pages}</span>
+                    <span class="tablenav-paging-text">{$page|intval} of {$pages|intval}</span>
                     {if $page < $pages}
-                        <a class="btn btn-default btn-sm" href="{$base_url}&paged={$page + 1}{if $search}&q={$search}{/if}">›</a>
+                        <a class="btn btn-default btn-sm" href="{$base_url|escape:'html':'UTF-8'}&amp;paged={($page + 1)|intval}{if $search}&amp;q={$search|escape:'html':'UTF-8'}{/if}">›</a>
                     {else}
                         <span class="btn btn-default btn-sm disabled">›</span>
                     {/if}

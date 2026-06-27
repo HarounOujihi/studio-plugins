@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Soldx_Integration::soldx"
+             title="Soldx Studio"
+             module="Soldx_Integration"
+             sortOrder="100"
+             resource="Soldx_Integration::soldx"/>
+
+        <add id="Soldx_Integration::settings"
+             title="Settings"
+             module="Soldx_Integration"
+             sortOrder="10"
+             action="soldx/settings"
+             resource="Soldx_Integration::settings"
+             parent="Soldx_Integration::soldx"/>
+
+        <add id="Soldx_Integration::categories"
+             title="Categories"
+             module="Soldx_Integration"
+             sortOrder="20"
+             action="soldx/categories"
+             resource="Soldx_Integration::categories"
+             parent="Soldx_Integration::soldx"/>
+
+        <add id="Soldx_Integration::articles"
+             title="Articles"
+             module="Soldx_Integration"
+             sortOrder="30"
+             action="soldx/articles"
+             resource="Soldx_Integration::articles"
+             parent="Soldx_Integration::soldx"/>
+    </menu>
+</config>

@@ -1,0 +1,459 @@
+<?php
+/**
+ * @var $block \Soldx\Integration\Block\Adminhtml\Categories
+ */
+$tree = $block->getCategoryTree();
+$studioCategories = $block->getStudioCategories();
+$categoryMap = $block->getCategoryMap();
+$counts = $block->getCategoryCounts();
+$formKey = $block->getFormKey();
+$saveUrl = $block->getSaveUrl();
+$createAjaxUrl = $block->getCreateAjaxUrl();
+$isConnected = $block->isConnected();
+?>
+<style>
+.soldx-cat-page { max-width: 900px; }
+.soldx-cat-dashboard {
+    display: flex; gap: 12px; margin-bottom: 20px;
+}
+.soldx-cat-stat {
+    background: #fff; border: 1px solid #d6d6d6; border-radius: 4px;
+    padding: 14px 24px; min-width: 110px; text-align: center;
+}
+.soldx-cat-stat .num { font-size: 26px; font-weight: 700; display: block; }
+.soldx-cat-stat .lbl { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.soldx-cat-stat.mapped .num { color: #1a7e34; }
+.soldx-cat-stat.unmapped .num { color: #2c6cb0; }
+.soldx-cat-stat.total .num { color: #333; }
+
+.soldx-cat-toolbar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.soldx-cat-toolbar input[type="search"] {
+    width: 240px; padding: 6px 10px; border: 1px solid #b0b0b0; border-radius: 3px;
+}
+.soldx-cat-search-count { color: #888; font-size: 12px; }
+
+/* Tree structure */
+.soldx-tree { list-style: none; padding-left: 0; margin: 0; }
+.soldx-tree ul { list-style: none; padding-left: 0; margin: 0; }
+
+.soldx-tree-node {
+    border-left: 2px solid #e0e0e0;
+    margin-left: 0;
+}
+.soldx-tree-node.has-children > .soldx-tree-row {
+    cursor: pointer;
+}
+.soldx-tree-children {
+    margin-left: 18px;
+    display: block;
+}
+.soldx-tree-node.collapsed > .soldx-tree-children {
+    display: none;
+}
+
+.soldx-tree-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+.soldx-tree-row:hover { background: #f8f9ff; }
+
+.soldx-toggle {
+    width: 20px; height: 20px; display: inline-flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; color: #666; font-size: 14px;
+    user-select: none; flex-shrink: 0;
+    border-radius: 3px;
+}
+.soldx-toggle:hover { background: #e8e8e8; }
+.soldx-toggle.empty { visibility: hidden; }
+.soldx-tree-node.collapsed > .soldx-tree-row .soldx-toggle::before { content: '\25B6'; }
+.soldx-tree-node:not(.collapsed) > .soldx-tree-row .soldx-toggle::before { content: '\25BC'; }
+
+.soldx-cat-thumb {
+    width: 32px; height: 32px; border-radius: 4px; object-fit: cover;
+    border: 1px solid #ddd; flex-shrink: 0;
+}
+.soldx-cat-thumb-placeholder {
+    width: 32px; height: 32px; border-radius: 4px; background: #f0f0f0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 9px; border: 1px solid #ddd; flex-shrink: 0;
+}
+
+.soldx-cat-info { flex: 1; min-width: 0; }
+.soldx-cat-name { font-weight: 600; font-size: 13px; color: #333; }
+.soldx-cat-path {
+    font-size: 11px; color: #999; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.soldx-cat-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    flex-shrink: 0;
+}
+.soldx-cat-badge.mapped { background: #d4edda; color: #155724; }
+.soldx-cat-badge.unmapped { background: #e8e8e8; color: #666; }
+
+.soldx-cat-actions {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.soldx-cat-select {
+    padding: 4px 8px; border: 1px solid #b0b0b0; border-radius: 3px;
+    font-size: 12px; min-width: 160px;
+}
+.soldx-cat-btn {
+    padding: 4px 10px; border-radius: 3px; font-size: 11px;
+    border: 1px solid #ccc; cursor: pointer; background: #fff;
+    white-space: nowrap;
+}
+.soldx-cat-btn.primary { background: #2c6cb0; color: #fff; border-color: #2c6cb0; }
+.soldx-cat-btn.primary:hover { background: #1a5599; }
+
+.soldx-cat-top-actions {
+    display: flex; gap: 10px; margin-left: auto;
+}
+.soldx-cat-top-btn {
+    padding: 8px 20px; border-radius: 4px; font-size: 13px; font-weight: 600;
+    border: 1px solid #ccc; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.soldx-cat-top-btn.primary { background: #2c6cb0; color: #fff; border-color: #2c6cb0; }
+.soldx-cat-top-btn.primary:hover { background: #1a5599; }
+.soldx-cat-top-btn.success { background: #28a745; color: #fff; border-color: #28a745; }
+</style>
+
+<div class="soldx-cat-page">
+    <?php if (!$isConnected): ?>
+        <div class="message message-warning">
+            <span><?= $escaper->escapeHtml(__('Not connected to Studio. Please configure the integration in Settings first.')) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <div class="soldx-cat-dashboard">
+        <div class="soldx-cat-stat total">
+            <span class="num"><?= (int) $counts['total'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Total')) ?></span>
+        </div>
+        <div class="soldx-cat-stat mapped">
+            <span class="num"><?= (int) $counts['mapped'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Mapped')) ?></span>
+        </div>
+        <div class="soldx-cat-stat unmapped">
+            <span class="num"><?= (int) $counts['unmapped'] ?></span>
+            <span class="lbl"><?= $escaper->escapeHtml(__('Unmapped')) ?></span>
+        </div>
+    </div>
+
+    <div class="soldx-cat-toolbar">
+        <input type="search" id="soldx-cat-search"
+               placeholder="<?= $escaper->escapeHtmlAttr(__('Search categories...')) ?>" />
+        <span class="soldx-cat-search-count"></span>
+        <div class="soldx-cat-top-actions">
+            <?php if ($isConnected): ?>
+                <button type="button" class="soldx-cat-top-btn primary" id="soldx-create-all">
+                    <span><?= $escaper->escapeHtml(__('Create All Unmapped in Studio')) ?></span>
+                </button>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <?php if (empty($studioCategories) && $isConnected): ?>
+        <div class="message message-warning" style="margin-bottom: 15px;">
+            <span><?= $escaper->escapeHtml(__('No Studio categories found. Use the "+ Studio" buttons to create them, or create them in Studio first.')) ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if (empty($tree)): ?>
+        <div class="message message-info">
+            <span><?= $escaper->escapeHtml(__('No Magento categories found.')) ?></span>
+        </div>
+    <?php else: ?>
+        <form method="post" action="<?= $escaper->escapeUrl($saveUrl) ?>" id="soldx-category-form">
+            <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($formKey) ?>" />
+            <ul class="soldx-tree" id="soldx-cat-tree">
+                <?php
+                /**
+                 * Recursively render a category tree node.
+                 *
+                 * @param array $node
+                 * @param array $studioCats
+                 * @param array $catMap
+                 * @return void
+                 */
+                $renderNode = function (array $node) use (&$renderNode, $studioCategories, $categoryMap, $escaper, $formKey, $createAjaxUrl, $isConnected) {
+                    $catId = $node['id'];
+                    $mappedStudioId = $categoryMap[(string) $catId] ?? '';
+                    $isMapped = $mappedStudioId !== '';
+                    $hasChildren = $node['has_children'];
+                    $hasImage = !empty($node['image_url']);
+                    $levelClass = $node['level'] <= 2 ? 'root' : 'child';
+                    ?>
+                    <li class="soldx-tree-node <?= $hasChildren ? 'has-children' : '' ?> <?= $levelClass ?>"
+                        data-name="<?= $escaper->escapeHtmlAttr(strtolower($node['name'])) ?>"
+                        data-path="<?= $escaper->escapeHtmlAttr(strtolower($node['path'])) ?>"
+                        id="soldx-cat-node-<?= (int) $catId ?>">
+
+                        <div class="soldx-tree-row">
+                            <span class="soldx-toggle <?= $hasChildren ? '' : 'empty' ?>"
+                                  onclick="event.stopPropagation(); document.getElementById('soldx-cat-node-<?= (int) $catId ?>').classList.toggle('collapsed');"></span>
+
+                            <?php if ($hasImage): ?>
+                                <img src="<?= $escaper->escapeUrl($node['image_url']) ?>"
+                                     class="soldx-cat-thumb" alt="" />
+                            <?php else: ?>
+                                <span class="soldx-cat-thumb-placeholder">N/A</span>
+                            <?php endif; ?>
+
+                            <div class="soldx-cat-info">
+                                <div class="soldx-cat-name">
+                                    <?= $escaper->escapeHtml($node['name']) ?>
+                                    <span style="color:#aaa;font-weight:400;font-size:11px;">#<?= (int) $catId ?></span>
+                                </div>
+                                <div class="soldx-cat-path"><?= $escaper->escapeHtml($node['path']) ?></div>
+                            </div>
+
+                            <span class="soldx-cat-badge <?= $isMapped ? 'mapped' : 'unmapped' ?>">
+                                <?= $escaper->escapeHtml($isMapped ? __('Mapped') : __('Not mapped')) ?>
+                            </span>
+
+                            <div class="soldx-cat-actions">
+                                <select name="mapping[<?= $escaper->escapeHtmlAttr((string) $catId) ?>]"
+                                        class="soldx-cat-select"
+                                        data-category-id="<?= $escaper->escapeHtmlAttr((string) $catId) ?>">
+                                    <option value=""><?= $escaper->escapeHtml(__('-- Select --')) ?></option>
+                                    <?php foreach ($studioCategories as $studioCat): ?>
+                                        <?php
+                                        $studioId = (string) ($studioCat['id'] ?? '');
+                                        $studioLabel = $studioCat['designation'] ?? ($studioCat['reference'] ?? $studioId);
+                                        $hasStudioParent = !empty($studioCat['idParent']);
+                                        $selected = ($mappedStudioId === $studioId) ? 'selected' : '';
+                                        ?>
+                                        <option value="<?= $escaper->escapeHtmlAttr($studioId) ?>" <?= $selected ?>>
+                                            <?= $hasStudioParent ? '— ' : '' ?><?= $escaper->escapeHtml($studioLabel) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if ($isConnected): ?>
+                                    <button type="button" class="soldx-cat-btn primary soldx-create-cat-btn"
+                                            data-cat-name="<?= $escaper->escapeHtmlAttr($node['name']) ?>"
+                                            data-cat-id="<?= $escaper->escapeHtmlAttr((string) $catId) ?>"
+                                            data-cat-parent="<?= $escaper->escapeHtmlAttr((string) $node['parent_id']) ?>">
+                                        <span>+ Studio</span>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <?php if ($hasChildren): ?>
+                            <ul class="soldx-tree-children">
+                                <?php foreach ($node['children'] as $child): ?>
+                                    <?php $renderNode($child); ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </li>
+                    <?php
+                };
+
+                foreach ($tree as $rootNode) {
+                    $renderNode($rootNode);
+                }
+                ?>
+            </ul>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="soldx-cat-top-btn success">
+                    <span><?= $escaper->escapeHtml(__('Save Mappings')) ?></span>
+                </button>
+            </div>
+        </form>
+    <?php endif; ?>
+</div>
+
+<script>
+require(['jquery'], function($) {
+    var ajaxUrl = '<?= $escaper->escapeUrl($createAjaxUrl) ?>';
+    var formKey = '<?= $escaper->escapeHtmlAttr($formKey) ?>';
+
+    // Update search count
+    function updateCount() {
+        var total = $('.soldx-tree-node').length;
+        var visible = $('.soldx-tree-node').filter(function() {
+            return $(this).is(':visible');
+        }).length;
+        $('.soldx-cat-search-count').text(visible + ' / ' + total);
+    }
+    updateCount();
+
+    // Live search — match name or path, show parents of matching children
+    $('#soldx-cat-search').on('input', function() {
+        var query = $(this).val().toLowerCase().trim();
+
+        if (query === '') {
+            $('.soldx-tree-node').show();
+            $('.soldx-tree-node').removeClass('collapsed');
+            updateCount();
+            return;
+        }
+
+        $('.soldx-tree-node').each(function() {
+            var name = $(this).data('name') || '';
+            var path = $(this).data('path') || '';
+            var match = name.indexOf(query) !== -1 || path.indexOf(query) !== -1;
+            $(this).toggle(match);
+        });
+
+        // Ensure ancestors of visible nodes are also visible and expanded
+        $('.soldx-tree-node:visible').each(function() {
+            $(this).parents('.soldx-tree-node').show().removeClass('collapsed');
+        });
+
+        updateCount();
+    });
+
+    // Single "+ Studio" create
+    function handleCreate(btn) {
+        var catName = btn.data('cat-name');
+        var catId = btn.data('cat-id');
+        var select = btn.siblings('.soldx-cat-select');
+        var currentVal = select.val();
+        var idParent = currentVal || '';
+
+        btn.prop('disabled', true).find('span').text('...');
+
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: {
+                form_key: formKey,
+                designation: catName,
+                categoryId: catId,
+                idParent: idParent
+            },
+            dataType: 'json'
+        }).done(function(data) {
+            if (data.success) {
+                var newId = data.category.id;
+                var newLabel = data.category.designation;
+                var prefix = data.category.idParent ? '— ' : '';
+                $('.soldx-cat-select').each(function() {
+                    if ($(this).find('option[value="' + newId + '"]').length === 0) {
+                        $(this).append('<option value="' + newId + '">' + prefix + newLabel + '</option>');
+                    }
+                });
+                select.val(newId);
+                btn.find('span').text('Created');
+                setTimeout(function() { btn.prop('disabled', false).find('span').text('+ Studio'); }, 1500);
+            } else {
+                alert(data.message || 'Failed to create category');
+                btn.prop('disabled', false).find('span').text('+ Studio');
+            }
+        }).fail(function() {
+            alert('Request failed');
+            btn.prop('disabled', false).find('span').text('+ Studio');
+        });
+    }
+
+    // Direct handler — must not use delegation because the
+    // .soldx-cat-btn stopPropagation() above would block it.
+    $('.soldx-create-cat-btn').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCreate($(this));
+    });
+
+    // Prevent tree toggle when clicking on row actions
+    $('.soldx-cat-select, .soldx-cat-btn').on('click', function(e) {
+        e.stopPropagation();
+    });
+
+    // Batch "Create All Unmapped"
+    $('#soldx-create-all').on('click', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var rows = [];
+
+        $('.soldx-cat-select').each(function() {
+            var select = $(this);
+            var createBtn = select.siblings('.soldx-create-cat-btn');
+            if ((!select.val() || select.val() === '') && createBtn.length) {
+                rows.push({btn: createBtn});
+            }
+        });
+
+        if (rows.length === 0) {
+            alert('No unmapped categories to create.');
+            return;
+        }
+
+        btn.prop('disabled', true).find('span').text('Creating...');
+
+        var created = 0, failed = 0, idx = 0;
+
+        function processNext() {
+            if (idx >= rows.length) {
+                btn.find('span').text('Done (' + created + ' created, ' + failed + ' failed)');
+                setTimeout(function() {
+                    btn.prop('disabled', false).find('span').text('Create All Unmapped in Studio');
+                }, 2000);
+                return;
+            }
+
+            var r = rows[idx];
+            idx++;
+            r.btn.prop('disabled', true).find('span').text('...');
+
+            handleCreateAsync(r.btn, function(success) {
+                if (success) {
+                    created++;
+                    r.btn.find('span').text('Created');
+                } else {
+                    failed++;
+                    r.btn.find('span').text('Failed');
+                }
+                setTimeout(processNext, 300);
+            });
+        }
+
+        function handleCreateAsync(btn, callback) {
+            var catName = btn.data('cat-name');
+            var catId = btn.data('cat-id');
+            var select = btn.siblings('.soldx-cat-select');
+
+            $.ajax({
+                url: ajaxUrl,
+                type: 'POST',
+                data: {
+                    form_key: formKey,
+                    designation: catName,
+                    categoryId: catId,
+                    idParent: ''
+                },
+                dataType: 'json'
+            }).done(function(data) {
+                if (data.success) {
+                    var newId = data.category.id;
+                    var newLabel = data.category.designation;
+                    var prefix = data.category.idParent ? '— ' : '';
+                    $('.soldx-cat-select').each(function() {
+                        if ($(this).find('option[value="' + newId + '"]').length === 0) {
+                            $(this).append('<option value="' + newId + '">' + prefix + newLabel + '</option>');
+                        }
+                    });
+                    select.val(newId);
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            }).fail(function() {
+                callback(false);
+            });
+        }
+
+        processNext();
+    });
+});
+</script>

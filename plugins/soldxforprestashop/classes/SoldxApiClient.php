@@ -1,25 +1,32 @@
 <?php
+
 /**
+ * Soldx for PrestaShop — API client.
+ *
  * HTTP client for the Studio /api/plugin/* endpoints.
  *
  * Uses cURL directly — no external dependencies.
  *
  * Direction: PrestaShop → Studio (push PS products into Studio).
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class SoldxApiClient
 {
-    /** @var string Studio base URL, no trailing slash. */
+    /** @var string Studio base URL, no trailing slash */
     private $base_url;
 
-    /** @var string API key. */
+    /** @var string API key */
     private $api_key;
 
-    /** @var int Request timeout in seconds. */
+    /** @var int Request timeout in seconds */
     private $timeout = 30;
 
     public function __construct($base_url = null, $api_key = null)
@@ -32,6 +39,7 @@ class SoldxApiClient
      * Test connection — exchange the apiKey for integration context.
      *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function authenticate()
@@ -45,6 +53,7 @@ class SoldxApiClient
      * Fetch establishment-level option lists (units, deposits, taxes, tags, categories).
      *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function getOptions()
@@ -58,7 +67,9 @@ class SoldxApiClient
      * @param string $designation
      * @param string $id_parent
      * @param string $image
+     *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function createCategory($designation, $id_parent = '', $image = '')
@@ -70,6 +81,7 @@ class SoldxApiClient
         if ('' !== $image) {
             $body['image'] = $image;
         }
+
         return $this->request('POST', '/api/plugin/categories', $body);
     }
 
@@ -78,7 +90,9 @@ class SoldxApiClient
      *
      * @param string $studio_cat_id
      * @param string $image_key
+     *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function updateCategoryImage($studio_cat_id, $image_key)
@@ -94,7 +108,9 @@ class SoldxApiClient
      * Read the current mapping state for a PS product (externalId = PS product id).
      *
      * @param string|int $external_id
+     *
      * @return array|null
+     *
      * @throws SoldxApiException
      */
     public function getMapping($external_id)
@@ -108,6 +124,7 @@ class SoldxApiClient
             if (404 === (int) $e->getCode()) {
                 return null;
             }
+
             throw $e;
         }
     }
@@ -116,7 +133,9 @@ class SoldxApiClient
      * Push a PS product to Studio (create Article + Pricing + mapping).
      *
      * @param array $dto
+     *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function pushProduct($dto)
@@ -129,7 +148,9 @@ class SoldxApiClient
      *
      * @param string|int $external_id
      * @param array $dto
+     *
      * @return array
+     *
      * @throws SoldxApiException
      */
     public function updateProduct($external_id, $dto)
@@ -148,10 +169,12 @@ class SoldxApiClient
     /**
      * Upload an image file to Studio's /api/upload endpoint.
      *
-     * @param string $file_path Absolute path.
-     * @param string $org_id    Organization ID (S3 prefix).
-     * @param string $filename  Display name.
-     * @return string S3 key.
+     * @param string $file_path Absolute path
+     * @param string $org_id Organization ID (S3 prefix)
+     * @param string $filename Display name
+     *
+     * @return string S3 key
+     *
      * @throws SoldxApiException
      */
     public function uploadImage($file_path, $org_id, $filename = '')
@@ -184,7 +207,7 @@ class SoldxApiClient
         // Build multipart/form-data body.
         $boundary = md5(uniqid('', true));
 
-        $body  = '';
+        $body = '';
         $body .= '--' . $boundary . "\r\n";
         $body .= 'Content-Disposition: form-data; name="orgId"' . "\r\n\r\n";
         $body .= $org_id . "\r\n";
@@ -212,9 +235,9 @@ class SoldxApiClient
             CURLOPT_MAXREDIRS => 5,
         ]);
 
-        $raw  = curl_exec($ch);
+        $raw = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err  = curl_error($ch);
+        $err = curl_error($ch);
         curl_close($ch);
 
         if ($raw === false) {
@@ -244,8 +267,10 @@ class SoldxApiClient
      *
      * @param string $method GET|POST|PUT|PATCH|DELETE
      * @param string $path
-     * @param array|null $body JSON body for POST/PUT/PATCH.
-     * @return array Decoded JSON.
+     * @param array|null $body JSON body for POST/PUT/PATCH
+     *
+     * @return array Decoded JSON
+     *
      * @throws SoldxApiException
      */
     private function request($method, $path, $body = null)
@@ -285,9 +310,9 @@ class SoldxApiClient
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
         }
 
-        $raw  = curl_exec($ch);
+        $raw = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err  = curl_error($ch);
+        $err = curl_error($ch);
         curl_close($ch);
 
         if ($raw === false) {

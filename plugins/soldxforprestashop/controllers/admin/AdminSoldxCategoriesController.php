@@ -1,8 +1,15 @@
 <?php
-/**
- * Admin categories controller — maps PS categories to Studio categories.
- */
 
+/**
+ * Soldx for PrestaShop — categories controller.
+ *
+ * Admin categories controller — maps PS categories to Studio categories.
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
+ */
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -15,6 +22,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     {
         parent::init();
         // Redirect to settings if not configured.
+
         if (!SoldxAuth::isConfigured()) {
             Tools::redirectAdmin($this->context->link->getAdminLink('AdminSoldxSettings'));
         }
@@ -30,11 +38,12 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         // Read & clear flash.
         $flash = $this->readFlash();
 
-        $id_lang = (int) Context::getContext()->language->id;
+        $id_lang = (int) $this->context->language->id;
 
         // Fetch Studio categories from cached options.
         $options = $this->getEstablishmentOptions();
         $studio_cats = [];
+
         if (is_array($options) && isset($options['categories']) && is_array($options['categories'])) {
             $studio_cats = $options['categories'];
         }
@@ -74,6 +83,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
             return $this->handleSave();
         }
         // Let the parent handle AJAX dispatch (ajaxProcess*) and other actions.
+
         return parent::postProcess();
     }
 
@@ -81,10 +91,12 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     {
         $raw = Tools::getValue('mapping');
         $clean = [];
+
         if (is_array($raw)) {
             foreach ($raw as $ps_cat_id => $studio_cat_id) {
                 $ps_cat_id = (int) $ps_cat_id;
                 $studio_cat_id = pSQL($studio_cat_id);
+
                 if ($ps_cat_id && '' !== $studio_cat_id) {
                     $clean[$ps_cat_id] = $studio_cat_id;
                 }
@@ -95,13 +107,15 @@ class AdminSoldxCategoriesController extends ModuleAdminController
 
         // Sync PS category images to Studio for all mapped categories.
         $image_synced = 0;
-        $id_lang = (int) Context::getContext()->language->id;
+        $id_lang = (int) $this->context->language->id;
+
         foreach ($clean as $ps_cat_id => $studio_cat_id) {
             $image_key = $this->uploadCategoryImage($ps_cat_id);
+
             if ('' !== $image_key) {
                 try {
                     Soldxforprestashop::getApiClient()->updateCategoryImage($studio_cat_id, $image_key);
-                    $image_synced++;
+                    ++$image_synced;
                 } catch (SoldxApiException $e) {
                     // Best-effort.
                 }
@@ -111,6 +125,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         $this->bustOptionsCache();
 
         $msg = count($clean) . ' category mapping(s) saved.';
+
         if ($image_synced > 0) {
             $msg .= ' ' . $image_synced . ' category image(s) synced.';
         }
@@ -130,22 +145,27 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         $ps_cat_id = (int) Tools::getValue('wcTermId'); // PS category id
 
         if ('' === $designation) {
-            $this->ajaxDie(json_encode([
+            $this->ajaxRender(json_encode([
                 'success' => false,
                 'message' => 'Designation is required.',
             ]));
+
+            return;
         }
 
         // Auto-resolve parent: if no explicit Studio parent was selected,
         // check whether this PS category's parent is already mapped to a
         // Studio category and use that as the parent.
+
         if ('' === $id_parent && $ps_cat_id) {
             $ps_parent_id = (int) Db::getInstance()->getValue(
                 'SELECT id_parent FROM ' . _DB_PREFIX_ . 'category WHERE id_category = ' . $ps_cat_id
             );
+
             if ($ps_parent_id > 1) { // 1 = root, skip
                 $mapping = self::getMapping();
                 $ps_parent_key = (string) $ps_parent_id;
+
                 if (isset($mapping[$ps_parent_key]) && '' !== $mapping[$ps_parent_key]) {
                     $id_parent = $mapping[$ps_parent_key];
                 }
@@ -155,14 +175,17 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         // Validate that the resolved parent actually exists in Studio.
         // Stale mappings (e.g. after Studio categories were deleted) would
         // cause a foreign-key constraint violation on create.
+
         if ('' !== $id_parent) {
             $studio_cat_ids = $this->getStudioCategoryIds();
+
             if (!in_array($id_parent, $studio_cat_ids)) {
                 $id_parent = ''; // Parent no longer exists, create as root.
             }
         }
 
         $image_key = '';
+
         if ($ps_cat_id) {
             $image_key = $this->uploadCategoryImage($ps_cat_id);
         }
@@ -172,20 +195,25 @@ class AdminSoldxCategoriesController extends ModuleAdminController
 
             // Immediately update the local mapping so that subsequent
             // subcategory imports can resolve the correct parent.
+
             if ($ps_cat_id && !empty($result['id'])) {
                 $this->updateMappingEntry($ps_cat_id, $result['id']);
             }
 
             $this->bustOptionsCache();
-            $this->ajaxDie(json_encode([
+            $this->ajaxRender(json_encode([
                 'success' => true,
                 'category' => $result,
             ]));
+
+            return;
         } catch (SoldxApiException $e) {
-            $this->ajaxDie(json_encode([
+            $this->ajaxRender(json_encode([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]));
+
+            return;
         }
     }
 
@@ -207,6 +235,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
                     ON (c.id_parent = clp.id_category AND clp.id_lang = ' . (int) $id_lang . ')
                 WHERE c.active = 1 AND c.id_category > 1
                 ORDER BY c.nleft';
+
         return Db::getInstance()->executeS($sql);
     }
 
@@ -214,6 +243,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     {
         $json = Configuration::get('SOLDX_CATEGORY_MAP');
         $mapping = $json ? json_decode($json, true) : [];
+
         return is_array($mapping) ? $mapping : [];
     }
 
@@ -225,17 +255,21 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         $mapping = self::getMapping();
         $resolved = [];
         $seen = [];
+
         foreach ($ps_cat_ids as $ps_id) {
             $ps_id = (string) $ps_id;
+
             if (!isset($mapping[$ps_id])) {
                 continue;
             }
             $studio_id = $mapping[$ps_id];
+
             if (!isset($seen[$studio_id])) {
                 $seen[$studio_id] = true;
                 $resolved[] = $studio_id;
             }
         }
+
         return $resolved;
     }
 
@@ -247,15 +281,18 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     private function getStudioCategoryIds()
     {
         $options = $this->getEstablishmentOptions();
+
         if (!is_array($options) || !isset($options['categories'])) {
             return [];
         }
         $ids = [];
+
         foreach ($options['categories'] as $cat) {
             if (!empty($cat['id'])) {
                 $ids[] = $cat['id'];
             }
         }
+
         return $ids;
     }
 
@@ -267,6 +304,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
     private function updateMappingEntry($ps_cat_id, $studio_cat_id)
     {
         $ps_cat_id = (int) $ps_cat_id;
+
         if (!$ps_cat_id || empty($studio_cat_id)) {
             return;
         }
@@ -290,6 +328,7 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         }
 
         $org_id = SoldxAuth::orgId();
+
         if ('' === $org_id) {
             return '';
         }
@@ -308,10 +347,13 @@ class AdminSoldxCategoriesController extends ModuleAdminController
         $ttl = 300;
 
         $ts = (int) Configuration::get($cache_ts_key);
+
         if ($ts > 0 && (time() - $ts) < $ttl) {
             $cached = Configuration::get($cache_key);
+
             if ($cached) {
                 $data = json_decode($cached, true);
+
                 if (is_array($data)) {
                     return $data;
                 }
@@ -320,14 +362,17 @@ class AdminSoldxCategoriesController extends ModuleAdminController
 
         try {
             $options = Soldxforprestashop::getApiClient()->getOptions();
+
             if (is_array($options)) {
                 Configuration::updateValue($cache_key, json_encode($options));
                 Configuration::updateValue($cache_ts_key, time());
+
                 return $options;
             }
         } catch (SoldxApiException $e) {
             return false;
         }
+
         return false;
     }
 
@@ -338,16 +383,18 @@ class AdminSoldxCategoriesController extends ModuleAdminController
 
     private function setFlash($msg, $type = 'info')
     {
-        $this->context->cookie->soldx_flash = json_encode(['msg' => $msg, 'type' => $type]);
+        $this->context->cookie->__set('soldx_flash', json_encode(['msg' => $msg, 'type' => $type]));
     }
 
     private function readFlash()
     {
-        if (isset($this->context->cookie->soldx_flash)) {
-            $flash = json_decode($this->context->cookie->soldx_flash, true);
-            unset($this->context->cookie->soldx_flash);
+        if ($this->context->cookie->__isset('soldx_flash')) {
+            $flash = json_decode($this->context->cookie->__get('soldx_flash'), true);
+            $this->context->cookie->__unset('soldx_flash');
+
             return $flash;
         }
+
         return null;
     }
 }

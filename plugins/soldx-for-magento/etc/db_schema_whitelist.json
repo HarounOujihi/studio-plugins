@@ -1,0 +1,27 @@
+{
+    "soldx_mappings": {
+        "column": {
+            "id": true,
+            "studio_article_id": true,
+            "integration_id": true,
+            "magento_product_id": true,
+            "magento_sku": true,
+            "sync_status": true,
+            "is_enabled": true,
+            "last_sync_at": true,
+            "last_error": true,
+            "payload_hash": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SOLDX_STUDIO_ARTICLE_ID_UNIQUE": true,
+            "SOLDX_MAGENTO_PRODUCT_ID_UNIQUE": true
+        },
+        "index": {
+            "SOLDX_MAGENTO_SKU": true,
+            "SOLDX_SYNC_STATUS": true
+        }
+    }
+}

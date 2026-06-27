@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="soldx_mappings" resource="default" engine="innodb"
+           comment="Soldx Studio Article ↔ Magento Product Mapping">
+        <column xsi:type="bigint" name="id" padding="20" unsigned="true" nullable="false"
+                identity="true" comment="Primary key"/>
+        <column xsi:type="varchar" name="studio_article_id" length="64" nullable="false"
+                comment="Studio Article UUID"/>
+        <column xsi:type="varchar" name="integration_id" length="64" nullable="true"
+                comment="Studio Integration ID"/>
+        <column xsi:type="int" name="magento_product_id" padding="10" unsigned="true" nullable="false"
+                comment="Magento Catalog Product Entity ID"/>
+        <column xsi:type="varchar" name="magento_sku" length="128" nullable="true"
+                comment="Magento Product SKU"/>
+        <column xsi:type="varchar" name="sync_status" length="20" nullable="false" default="pending"
+                comment="pending|synced|error"/>
+        <column xsi:type="smallint" name="is_enabled" padding="5" unsigned="true" nullable="false"
+                default="1" comment="1=auto-sync on, 0=disabled"/>
+        <column xsi:type="timestamp" name="last_sync_at" on_update="false" nullable="true"
+                comment="Last successful sync time"/>
+        <column xsi:type="text" name="last_error" nullable="true"
+                comment="Last error message"/>
+        <column xsi:type="varchar" name="payload_hash" length="64" nullable="true"
+                comment="sha256 of last synced payload for no-op skip"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Row creation time"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false"
+                default="CURRENT_TIMESTAMP" comment="Row update time"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SOLDX_STUDIO_ARTICLE_ID_UNIQUE">
+            <column name="studio_article_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SOLDX_MAGENTO_PRODUCT_ID_UNIQUE">
+            <column name="magento_product_id"/>
+        </constraint>
+
+        <index referenceId="SOLDX_MAGENTO_SKU">
+            <column name="magento_sku"/>
+        </index>
+        <index referenceId="SOLDX_SYNC_STATUS">
+            <column name="sync_status"/>
+        </index>
+    </table>
+</schema>

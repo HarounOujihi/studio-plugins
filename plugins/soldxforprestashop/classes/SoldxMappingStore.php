@@ -1,20 +1,27 @@
 <?php
+
 /**
+ * Soldx for PrestaShop — mapping store.
+ *
  * Local mapping table — mirrors Studio's ArticleExternalMapping so the
  * module keeps working when Studio is unreachable.
  *
  * Table: ps_soldx_mappings
  *   studio_article_id, integration_id, ps_product_id, ps_reference,
  *   sync_status, is_enabled, last_sync_at, last_error, payload_hash
+ *
+ * @author    Soldx
+ * @copyright Soldx
+ * @license   https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL
+ * @version   0.1.0
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class SoldxMappingStore
 {
-    private static $instance = null;
+    private static $instance;
     private $table;
 
     public static function getInstance()
@@ -22,6 +29,7 @@ class SoldxMappingStore
         if (self::$instance === null) {
             self::$instance = new self();
         }
+
         return self::$instance;
     }
 
@@ -47,11 +55,13 @@ class SoldxMappingStore
      * Get a mapping by Studio article id (scoped to current integration).
      *
      * @param string $studio_article_id
+     *
      * @return array|null
      */
     public function getByStudioId($studio_article_id)
     {
         $integration_id = SoldxAuth::integrationId();
+
         if (!$integration_id) {
             return null;
         }
@@ -59,6 +69,7 @@ class SoldxMappingStore
                 WHERE integration_id = "' . pSQL($integration_id) . '"
                   AND studio_article_id = "' . pSQL($studio_article_id) . '"';
         $row = Db::getInstance()->getRow($sql);
+
         return $row ?: null;
     }
 
@@ -66,6 +77,7 @@ class SoldxMappingStore
      * Get a mapping by PS product id.
      *
      * @param int $ps_product_id
+     *
      * @return array|null
      */
     public function getByPsId($ps_product_id)
@@ -73,6 +85,7 @@ class SoldxMappingStore
         $sql = 'SELECT * FROM `' . $this->table . '`
                 WHERE ps_product_id = ' . (int) $ps_product_id;
         $row = Db::getInstance()->getRow($sql);
+
         return $row ?: null;
     }
 
@@ -80,11 +93,13 @@ class SoldxMappingStore
      * Get all mappings for the current integration.
      *
      * @param array $args { enabled_only, status, limit, offset }
+     *
      * @return array
      */
     public function listMappings($args = [])
     {
         $integration_id = SoldxAuth::integrationId();
+
         if (!$integration_id) {
             return [];
         }
@@ -94,6 +109,7 @@ class SoldxMappingStore
         if (!empty($args['enabled_only'])) {
             $where .= ' AND is_enabled = 1';
         }
+
         if (!empty($args['status'])) {
             $where .= ' AND sync_status = "' . pSQL($args['status']) . '"';
         }
@@ -111,6 +127,7 @@ class SoldxMappingStore
      * Build a lookup map: ps_product_id → mapping row, for a list of ids.
      *
      * @param array $ps_ids
+     *
      * @return array associative
      */
     public function mapForPsIds($ps_ids)
@@ -124,9 +141,11 @@ class SoldxMappingStore
                 WHERE ps_product_id IN (' . $id_list . ')';
         $rows = Db::getInstance()->executeS($sql);
         $out = [];
+
         foreach ($rows as $row) {
             $out[(int) $row['ps_product_id']] = $row;
         }
+
         return $out;
     }
 
@@ -138,11 +157,13 @@ class SoldxMappingStore
      * Insert or update a mapping after a successful sync.
      *
      * @param array $data
+     *
      * @return bool
      */
     public function upsert($data)
     {
         $integration_id = SoldxAuth::integrationId();
+
         if (!$integration_id || empty($data['studio_article_id']) || empty($data['ps_product_id'])) {
             return false;
         }
@@ -172,6 +193,7 @@ class SoldxMappingStore
         }
 
         $row['created_at'] = $now;
+
         return Db::getInstance()->insert($this->shortTable(), $row);
     }
 
@@ -179,6 +201,7 @@ class SoldxMappingStore
      * Delete a mapping by PS product id (cleans up stale entries).
      *
      * @param int $ps_product_id
+     *
      * @return bool
      */
     public function deleteByPsId($ps_product_id)
