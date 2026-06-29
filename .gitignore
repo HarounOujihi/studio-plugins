@@ -1,9 +1,8 @@
-# Build artifacts
-*.zip
-# Exception: distribution ZIPs for public release
-!soldxforprestashop-*.zip
-!soldx-for-woocommerce-*.zip
-!soldx-woocommerce-*.zip
+# Distribution zips live in dist/
+/dist/
+
+# Nested git repos (docker-magento template etc.)
+/magento-demo/
 
 # Docker demo data (never commit container volumes)
 ps-demo/db-data/
