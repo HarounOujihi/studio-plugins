@@ -2,10 +2,10 @@
     "name": "soldx/module-integration",
     "description": "Soldx Studio integration for Magento 2. Sync products, categories, and images to Soldx Studio in real time.",
     "type": "magento2-module",
-    "license": "proprietary",
-    "version": "1.0.0",
+    "license": "MIT",
+    "version": "1.0.2",
     "require": {
-        "php": "~8.1.0||~8.2.0||~8.3.0",
+        "php": "~8.2.0||~8.3.0||~8.4.0||~8.5.0",
         "magento/framework": ">=103.0.0",
         "magento/module-catalog": ">=104.0.0",
         "magento/module-config": ">=101.0.0",
